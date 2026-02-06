@@ -30,7 +30,17 @@ class node:
         self.parents = newParents
     def set_children(self , newChildren):
         self.children = newChildren
-    def add_child_id (self, id)
+    def add_child_id (self, id , multiplicity =1):
+        if id in self.children:
+            self.children[id] += multiplicity
+        else:
+            self.children[id] = multiplicity
+    def add_parents_id (self, id , multiplicity =1):
+        if id in self.parents:
+            self.parents[id] += multiplicity
+        else:
+            self.parents[id] = multiplicity
+
 
 
 
