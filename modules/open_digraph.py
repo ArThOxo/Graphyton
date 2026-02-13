@@ -81,7 +81,23 @@ class node:
             raise KeyError(f"le noeud id n'est pas celui d'un child")
 
 
+    def remove_edge(self, src, tgt):
+        if src not in self.nodes:
+            raise KeyError(f"Le noeud source {src} n'existe pas dans le graphe.")
+        if tgt not in self.nodes:
+            raise KeyError(f"Le noeud cible {tgt} n'existe pas dans le graphe.")
+        
+        self.nodes[src].remove_child_once(tgt)
+        self.nodes[tgt].remove_parent_once(src)
 
+    def remove_parallel_edges(self, src, tgt):
+        if src not in self.nodes:
+            raise KeyError(f"Le noeud source {src} n'existe pas dans le graphe.")
+        if tgt not in self.nodes:
+            raise KeyError(f"Le noeud cible {tgt} n'existe pas dans le graphe.")
+            
+        self.nodes[src].remove_child_id(tgt)
+        self.nodes[tgt].remove_parent_id(src)
 
 
 class open_digraph:
