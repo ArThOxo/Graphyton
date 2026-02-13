@@ -58,6 +58,11 @@ class open_digraph:
         y = open_digraph(self.inputs, self.outputs, self.nodes)
         return y
     
+    @classmethod
+    def empty(cls):
+        return cls([], [], [])
+
+
     def newID(self):
         
 
