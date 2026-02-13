@@ -12,9 +12,7 @@ class node:
         y = node(self.id, self.label, self.parents, self.children)
         return y
 
-    def add_edge(self, src ,trgt):
-        src.add_child_id(trgt.get_id())
-        trgt.add_parents_id(src.get_id())
+
 
     #GETTERS
     def get_id(self):
@@ -70,7 +68,12 @@ class open_digraph:
 
     def newID(self):
         return max(self.get_nodes_ids) +1
-        
+    
+    def add_edge(self, src ,trgt):
+        src2 = get_node_by_id(src)
+        trgt2= get_node_by_id(trgt)
+        src2.add_child_id(trgt)
+        trgt2.add_parents_id(src)
 
 
     # GETTERQS
