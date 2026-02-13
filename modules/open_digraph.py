@@ -126,7 +126,17 @@ class open_digraph:
         id = self.new_id() 
         new_n = node(id, label, parents, children) 
         self.nodes[id] = new_n 
-    return id
+        for parent_id, multiplicity in parents.items():
+            if parent_id in self.nodes:
+                parent_node = self.nodes[parent_id]
+                parent_node.add_child_id(id, multiplicity)
+            
+    
+        for child_id, multiplicity in children.items():
+            if child_id in self.nodes:
+                child_node = self.nodes[child_id]
+                child_node.add_parents_id(id, multiplicity)
+    
 
 
 
