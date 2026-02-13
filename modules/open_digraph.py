@@ -11,6 +11,11 @@ class node:
     def copy(self):
         y = node(self.id, self.label, self.parents, self.children)
         return y
+
+    def add_edge(self, src ,trgt):
+        src.add_child_id(trgt.get_id())
+        trgt.add_parents_id(src.get_id())
+
     #GETTERS
     def get_id(self):
         return self.id
@@ -64,6 +69,7 @@ class open_digraph:
 
 
     def newID(self):
+        return max(self.get_nodes_ids) +1
         
 
 
@@ -85,6 +91,11 @@ class open_digraph:
         return self.nodes 
     def get_nodes(self):
         return list(self.nodes)
+    def get_nodes_ids(self):
+        resulat = []
+        for elem in self.nodes:
+            resulat.append(elem.get_id())
+        return resulat
 
                 
     #
