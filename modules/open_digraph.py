@@ -45,6 +45,42 @@ class node:
             self.parents[id] = multiplicity
 
 
+###############################################################################
+#### TD 2
+#########################################################
+    def remove_parent_once(self, id):
+        if id in self.parents:
+            if self.parents[id] > 0:
+                self.parents[id] -= 1
+            else:
+                self.parents.pop(id)
+        else:
+            raise KeyError(f"le noeud id n'est pas celui d'un daddy")
+
+
+    def remove_child_once(self, id):
+        if id in self.children:
+            if self.children[id] > 0:
+                self.children[id] -= 1
+            else:
+                self.children.pop(id)
+        else:
+            raise KeyError(f"le noeud id n'est pas celui d'un child")
+    
+    def remove_parent_id(self, id):
+        if id in self.parents:
+            self.parents.pop(id)
+        else:
+            raise KeyError(f"le noeud id n'est pas celui d'un daddy")
+
+
+    def remove_child_id(self, id):
+        if id in self.children:
+            self.children.pop(id)
+        else:
+            raise KeyError(f"le noeud id n'est pas celui d'un child")
+
+
 
 
 
