@@ -57,6 +57,9 @@ class open_digraph:
     def copy(self):
         y = open_digraph(self.inputs, self.outputs, self.nodes)
         return y
+    
+    def newID(self):
+        
 
 
     # GETTERQS
@@ -73,7 +76,23 @@ class open_digraph:
             if elem.get_id() in ids:
                 resultat.append(elem)
         return elem
+    def get_id_node_map(self):
+        return self.nodes 
+    def get_nodes(self):
+        return list(self.nodes)
+
                 
+    #
+    def set_inputs (self , newInputs):
+        self.inputs = newInputs
+    def set_outputs (self, newOuputs):
+        self.outputs = newOuputs
+    def add_output_id (self , outID):
+        if outID not in self.outputs:
+            self.outputs.append(outID)
+    def add_input_id (self , inID):
+        if inID not in self.inputs:
+            self.inputs.append(inID)
 
 
 

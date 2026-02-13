@@ -1,5 +1,5 @@
 from modules.open_digraph import *
-
+from inspect import *
 
 n0 = node(0, 'a', {3:1, 4:1}, {1:1, 2:1})
 n1 = node(1, 'b', {0:1}, {2:2, 5:1})
