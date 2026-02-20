@@ -165,8 +165,23 @@ class open_digraph:
         return True
 
 
+    def add_input_node(self, target_id):
+        if target_id not in self.nodes:
+            raise ValueError(f"Le noeud n'existe pas dans le graphe")
+        new_id = self.add_node(label="") 
+        self.add_edge(new_id, target_id)
+        self.inputs.append(new_id)
+        
+        return new_id
 
-
+    def add_output_node(self, source_id):
+        if source_id not in self.nodes:
+            raise ValueError(f"Le noeud n'existe pas dans le graphe.")
+        new_id = self.add_node(label="") 
+        self.add_edge(source_id, new_id)
+        self.outputs.append(new_id)
+        
+        return new_id
 
 
 
