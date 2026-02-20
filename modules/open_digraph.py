@@ -113,10 +113,62 @@ class open_digraph:
         new_nodes = [n.copy() for n in self.nodes.values()]
         y = open_digraph(self.inputs.copy(), self.outputs.copy(), new_nodes)
         return y
-    
+
     @classmethod
     def empty(cls):
         return cls([], [], [])
+
+    def is_well_formed(self):
+
+        inputnodes = self.inputs.get_nodes_by_ids()
+        outputnodes = self.outputs.get_node_by_ids()
+        if len(inputnodes) != len(self.inputs) or  len(outputnodes) != len(self.outputs):
+            return False
+        for elem in inputnodes:
+            if len(elem.get_parents()) >= 1 or len(elem.get_children()) > 1 or len(elem.get_children()) < 1 :
+                return False
+        for elem in outputnodes:
+            if len(elem.get_children()) >= 1 or len(elem.get_parents()) > 1 or len(elem.get_parents()) < 1:
+                return False
+        
+        for elem in self.nodes :
+            e_id = elem.get_id()
+            if elem != self.nodes[elem].get_id():
+                return False 
+            #Dictionnaire des enfants de la node d'id ELEM
+            elemchild = self.nodes[elem].get_children()
+            #Dictionnaire des parents de la node d'id ELEM
+            elemparents = self.nodes[elem].get_parents()
+            #
+            for ch,multiplicityCH in elemchild.items():
+                childparents = self.get_node_by_id(ch).get_parents()
+                #Recupere les parents des enfants de la node d'id ELEM
+
+                #ASSURE QUE NOTRE NODE est presente dans la liste des partens de ses enfants
+                if not e_id in childparents:
+                    return False
+                #SI la node est bien presente on s'assure que la multiplicit
+                else:
+                    if childparents[e_id] != multiplicityCH:
+                        return False
+
+            for pr,multiplicityPR in elemparents.items():
+                parentchildren = self.get_node_by_id(pr).get_children()
+                #Recupere les enfants des parents de la node d'id ELEM
+
+                #ASSURE QUE NOTRE NODE est presente dans la liste des enfants de ses partents
+                if not e_id in parentchildren:
+                    return False
+                #SI la node est bien presente on s'assure que la multiplicit
+                else:
+                    if parentchildren[e_id] != multiplicityPR:
+                        return False
+        return True
+
+
+
+
+
 
 
     def new_id(self):
