@@ -125,14 +125,13 @@ class open_digraph:
         if len(inputnodes) != len(self.inputs) or  len(outputnodes) != len(self.outputs):
             return False
         for elem in inputnodes:
-            if len(elem.get_parents()) >= 1 or len(elem.get_children()) > 1 or len(elem.get_children()) < 1 :
+            if len(elem.get_parents()) >= 1 or len(elem.get_children()) > 1 or len(elem.get_children()) < 1 or  list(elem.get_children().values())[0] != 1 :
                 return False
         for elem in outputnodes:
-            if len(elem.get_children()) >= 1 or len(elem.get_parents()) > 1 or len(elem.get_parents()) < 1:
+            if len(elem.get_children()) >= 1 or len(elem.get_parents()) > 1 or len(elem.get_parents()) < 1 or list(elem.get_parents().values())[0] != 1:
                 return False
         
         for elem in self.nodes :
-            e_id = elem.get_id()
             if elem != self.nodes[elem].get_id():
                 return False 
             #Dictionnaire des enfants de la node d'id ELEM
@@ -145,11 +144,11 @@ class open_digraph:
                 #Recupere les parents des enfants de la node d'id ELEM
 
                 #ASSURE QUE NOTRE NODE est presente dans la liste des partens de ses enfants
-                if not e_id in childparents:
+                if not elem in childparents:
                     return False
                 #SI la node est bien presente on s'assure que la multiplicit
                 else:
-                    if childparents[e_id] != multiplicityCH:
+                    if childparents[elem] != multiplicityCH:
                         return False
 
             for pr,multiplicityPR in elemparents.items():
@@ -157,11 +156,11 @@ class open_digraph:
                 #Recupere les enfants des parents de la node d'id ELEM
 
                 #ASSURE QUE NOTRE NODE est presente dans la liste des enfants de ses partents
-                if not e_id in parentchildren:
+                if not elem in parentchildren:
                     return False
                 #SI la node est bien presente on s'assure que la multiplicit
                 else:
-                    if parentchildren[e_id] != multiplicityPR:
+                    if parentchildren[elem] != multiplicityPR:
                         return False
         return True
 
