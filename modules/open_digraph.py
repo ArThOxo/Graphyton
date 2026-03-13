@@ -305,3 +305,50 @@ class open_digraph:
             for j in range(0,i):
                 matrix[i][j]=0
         return matrix
+
+
+
+    @classmethod
+    def graph_from_adjacency_matrix(cls, matrix):
+        n = len(matrix)
+        g = cls.empty()
+
+        ids = [g.add_node(label=f"v{i}") for i in range(n)]
+        
+        for i in range(n):
+            for j in range(n):
+                if matrix[i][j] > 0:
+                    g.nodes[ids[i]].add_child_id(ids[j], matrix[i][j])
+                    g.nodes[ids[j]].add_parents_id(ids[i], matrix[i][j])
+        return g
+
+
+    @classmethod
+    def random(cls, n, bound, inputs=0, outputs=0, form="free"):
+        if form == "free":
+            matrix = random_int_matrix(n, bound)
+        elif form == "DAG":
+            matrix = random_triangular_int_matrix(n, bound)
+        elif form == "oriented":
+            matrix = random_oriented_int_matrix(n, bound)
+        elif form == "loop-free":
+            matrix = random_int_matrix(n, bound, null_diag=True)
+        elif form == "undirected":
+            matrix = random_symetric_int_matrix(n, bound, null_diag=False)
+        elif form == "loop-free undirected":
+            matrix = random_symetric_int_matrix(n, bound, null_diag=True)
+        else:
+            raise ValueError("erreur forme")
+        
+        g = cls.graph_from_adjacency_matrix(matrix)
+        
+        node_ids = g.get_nodes_ids()
+        input_targets = random.sample(node_ids, min(inputs, len(node_ids)))
+        output_sources = random.sample(node_ids, min(outputs, len(node_ids)))
+        
+        for t_id in input_targets:
+            g.add_input_node(t_id)
+        for s_id in output_sources:
+            g.add_output_node(s_id)
+            
+        return g
