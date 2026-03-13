@@ -1,4 +1,10 @@
 import random
+import os
+import re
+import urllib.parse
+import webbrowser
+import tempfile
+
 
 class node:
     def __init__(self, identity, label, parents, children):
@@ -371,3 +377,31 @@ class open_digraph:
                     j = mapping[tgt_id]
                     matrix[i][j] += multiplicity
         return matrix
+
+#TD 4
+
+
+    def save_as_dot_file(self, path, verbose=False):
+        with open(path, 'w') as f:
+            f.write("digraph G {\n")
+            
+            for n_id, n in self.nodes.items():
+                label = n.get_label()
+                if verbose:
+                    label = f"ID:{n.get_id()} - {label}"
+                
+                attrs = [f'label="{label}"']
+                
+                if n_id in self.inputs:
+                    attrs.append('is_input="True"')
+                if n_id in self.outputs:
+                    attrs.append('is_output="True"')
+                
+                f.write(f'    v{n_id} [{", ".join(attrs)}];\n')
+                
+            for n_id, n in self.nodes.items():
+                for child_id, multiplicity in n.get_children().items():
+                    for _ in range(multiplicity):
+                        f.write(f'    v{n_id} -> v{child_id};\n')
+                        
+            f.write("}\n")
