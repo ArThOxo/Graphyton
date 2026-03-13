@@ -281,12 +281,20 @@ class open_digraph:
                     matrix[i][j] = ran
                     matrix[j][i] = ran
         return matrix
-    
-    def random_triangular_int_matrix(n, bound, null_diag=True):
-        matrix = random_matrix(n,bound)
+
+
+    def random_oriented_int_matrix(n, bound, null_diag=True):
+        matrix = [[0] * n for _ in range(n)]
         for i in range(n):
-            for j in range(0,i):
-                matrix[i][j]=0
+            for j in range(i, n):
+                if i == j:
+                    if not null_diag:
+                        matrix[i][i] = random.randint(0, bound)
+                else:
+                    ran = random.randint(0, bound)
+                    if ran > 0:
+                        if random.choice([True, False]):
+                            matrix[i][j] = ran
+                        else:
+                            matrix[j][i] = ran
         return matrix
-
-
