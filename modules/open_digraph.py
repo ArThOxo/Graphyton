@@ -1,3 +1,5 @@
+import random
+
 class node:
     def __init__(self, identity, label, parents, children):
         self.id = identity
@@ -254,7 +256,20 @@ class open_digraph:
             if child_id in self.nodes:
                 child_node = self.nodes[child_id]
                 child_node.add_parents_id(id, multiplicity)
+    #TD 3
+    def random_int_list(n,bound):
+        res = []
+        for i in range(n):
+            res.append(random.randint(0,bound))
+        return res
+    def random_matrix(n, bound, null_diag=False): 
+        matrix = [[random_int_list(n,bound)] for i in range(n)]
+        if null_diag:
+            for j in range(n):
+                matrix[j][j] = 0
+        return matrix
     
+        
 
 
 
