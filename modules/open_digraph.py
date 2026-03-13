@@ -352,3 +352,22 @@ class open_digraph:
             g.add_output_node(s_id)
             
         return g
+
+
+
+    def get_node_id_to_index_map(self):
+        return {node_id: index for index, node_id in enumerate(self.nodes.keys())}
+
+
+    def adjacency_matrix(self):
+        mapping = self.get_node_id_to_index_map()
+        n = len(self.nodes)
+        matrix = [[0] * n for _ in range(n)]
+        
+        for src_id, src_node in self.nodes.items():
+            i = mapping[src_id]
+            for tgt_id, multiplicity in src_node.get_children().items():
+                if tgt_id in mapping:
+                    j = mapping[tgt_id]
+                    matrix[i][j] += multiplicity
+        return matrix
