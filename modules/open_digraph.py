@@ -298,3 +298,10 @@ class open_digraph:
                         else:
                             matrix[j][i] = ran
         return matrix
+
+    def random_triangular_int_matrix(n, bound, null_diag=True):
+        matrix = random_matrix(n,bound)
+        for i in range(n):
+            for j in range(0,i):
+                matrix[i][j]=0
+        return matrix
