@@ -270,6 +270,16 @@ class open_digraph:
         return matrix
     
         
-
+    def random_symetric_int_matrix(n, bound, null_diag=True):
+        matrix = [[0] * n for _ in range(n)]
+        for i in range(n):
+            for j in range(i, n):
+                if i == j and null_diag:
+                    matrix[i][j] = 0
+                else:
+                    ran = random.randint(0, bound)
+                    matrix[i][j] = ran
+                    matrix[j][i] = ran
+        return matrix
 
 
