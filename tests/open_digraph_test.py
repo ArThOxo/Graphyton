@@ -174,6 +174,72 @@ class OpenDigraphTest(unittest.TestCase):
         self.assertEqual(n12.get_parents(), {10: 1})
         self.assertEqual(n12.get_children(), {11: 1})
 
+    def test_identity(self):
+        n = 3
+        id_graph = open_digraph.identity(n)
+        
+        self.assertEqual(len(id_graph.get_input_ids()), n)
+        self.assertEqual(len(id_graph.get_output_ids()), n)
+        self.assertEqual(len(id_graph.get_nodes()), 2 * n)
+        
+        for i, in_id in enumerate(id_graph.get_input_ids()):
+            out_id = id_graph.get_output_ids()[i]
+            in_node = id_graph.get_node_by_id(in_id)
+            self.assertIn(out_id, in_node.get_children())
+
+    def test_compositions(self):
+        n0 = node(0, 'A', {}, {1: 1})
+        n1 = node(1, 'B', {0: 1}, {2: 1})
+        n2 = node(2, 'C', {1: 1}, {})
+        g1 = open_digraph([0], [2], [n0, n1, n2])
+        
+        n0_bis = node(0, 'X', {}, {1: 1})
+        n1_bis = node(1, 'Y', {0: 1}, {2: 1})
+        n2_bis = node(2, 'Z', {1: 1}, {})
+        g2 = open_digraph([0], [2], [n0_bis, n1_bis, n2_bis])
+
+        g_para = g1.comp_parallel(g2)
+        self.assertEqual(len(g_para.get_nodes()), 6) 
+        self.assertEqual(len(g_para.get_input_ids()), 2) 
+        self.assertEqual(len(g_para.get_output_ids()), 2)
+        self.assertTrue(g_para.is_well_formed())
+
+        g_seq = g1.comp_sequentielle(g2)
+        self.assertEqual(len(g_seq.get_nodes()), 6)
+        self.assertEqual(len(g_seq.get_input_ids()), 1) 
+        self.assertEqual(len(g_seq.get_output_ids()), 1) 
+        self.assertTrue(g_seq.is_well_formed())
+        
+        id_graph = open_digraph.identity(3)
+        with self.assertRaises(ValueError):
+            g1.comp_sequentielle(id_graph)
+
+    def test_connected_components(self):
+        n0 = node(0, 'A', {}, {1: 1})
+        n1 = node(1, 'B', {0: 1}, {})
+        n2 = node(2, 'C', {}, {3: 1})
+        n3 = node(3, 'D', {2: 1}, {})
+        
+        g = open_digraph([0, 2], [1, 3], [n0, n1, n2, n3])
+        
+        components = g.connected_components()
+        self.assertEqual(len(components), 2) 
+        
+        
+        list_of_sets = [set(c) for c in components]
+        self.assertIn({0, 1}, list_of_sets)
+        self.assertIn({2, 3}, list_of_sets)
+
+        
+        graphs = g.connected_components_graphs()
+        self.assertEqual(len(graphs), 2)
+        
+        for sub_g in graphs:
+            self.assertTrue(sub_g.is_well_formed())
+            self.assertEqual(len(sub_g.get_nodes()), 2)
+            self.assertEqual(len(sub_g.get_input_ids()), 1)
+            self.assertEqual(len(sub_g.get_output_ids()), 1)
+
 class BoolCircTest(unittest.TestCase):
     def test_bool_circ_validation(self):
         n0 = node(0, '', {}, {2: 1})
