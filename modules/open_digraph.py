@@ -700,3 +700,45 @@ class open_digraph:
             components.append(comp)
             
         return components
+    
+
+    def connected_components_graphs(self):
+        """
+        Sépare le graphe en plusieurs sous-graphes indépendant (composantes connexes) 
+        et retourne une liste d'objets open_digraph
+        
+        Difficultés propres aux graphes ouverts (Ordre des interfaces):
+        Contrairement aux graphes classiques, décomposer un graphe ouvert pose un 
+        problème conceptuel majeur : la perte de l'ordre global des entrées et sorties.
+        
+        Rôle de l'ordre : Dans un open_digraph, la liste des inputs et outputs définit 
+        l'interface stricte du circuit (sa signature). En séparant le graphe en 
+        plusieurs composantes (A, B, etc.), on conserve l'ordre relatif des entrées 
+        à l'intérieur de A ou de B, mais on perd leur ordre absolu (global).
+        
+        Conséquence : Si l'on essaie de reconstruire le graphe d'origine en effectuant 
+        une composition parallèle (ex: A.comp_parallel(B)), les entrées et sorties 
+        seront simplement concaténées. Si l'entrée n°1 du graphe initial allait dans B 
+        et la n°2 dans A, la composition parallèle inversera cet ordre. La décomposition 
+        est donc "destructive" d'un point de vue de l'interface globale, à moins de 
+        stocker en parallèle des graphes de permutation (ou de routage) pour mémoriser 
+        l'indice exact de chaque fil d'interface.
+        """
+        # 1. On récupère les listes d'IDs des composantes
+        components_ids = self.connected_components()
+        graphs = []
+        
+        for comp in components_ids:
+            # 2. On copie les noeuds appartenant à cette composante
+            comp_nodes = [self.get_node_by_id(n_id).copy() for n_id in comp]
+            
+            # 3. On filtre les entrées et sorties globales pour conserver l'ordre relatif
+            # (L'utilisation de la liste d'origine garantit que l'ordre interne est gardé)
+            comp_inputs = [i for i in self.get_input_ids() if i in comp]
+            comp_outputs = [o for o in self.get_output_ids() if o in comp]
+            
+            # 4. On instancie le nouveau sous-graphe
+            new_graph = open_digraph(comp_inputs, comp_outputs, comp_nodes)
+            graphs.append(new_graph)
+            
+        return graphs
