@@ -285,6 +285,26 @@ class open_digraph:
         if not self.is_well_formed():
             raise ValueError("Le graphe n'est pas bien formé.")
 
+
+
+    def is_cyclic(self):
+        out_degrees = {n.get_id(): n.outdegree() for n in self.get_nodes()}
+        leaves = [node_id for node_id, deg in out_degrees.items() if deg == 0]
+        visited_count = 0
+        
+        while leaves:
+            leaf_id = leaves.pop()
+            visited_count += 1
+            leaf_node = self.get_node_by_id(leaf_id)
+            for parent_id, multiplicity in leaf_node.get_parents().items():
+                out_degrees[parent_id] -= multiplicity
+                if out_degrees[parent_id] == 0:
+                    leaves.append(parent_id)
+                    
+        return visited_count != len(self.get_nodes())
+    
+
+
     def add_input_node(self, target_id):
         if target_id not in self.nodes:
             raise ValueError(f"Le noeud cible {target_id} n'existe pas.")
@@ -493,3 +513,38 @@ class open_digraph:
         encoded_dot = urllib.parse.quote(dot_content)
         url = f"https://dreampuf.github.io/GraphvizOnline/#{encoded_dot}"
         webbrowser.open(url)
+
+
+    # TD 5
+
+    def min_id(self):
+        if not self.nodes:
+            return 0
+        return min(self.nodes.keys())
+
+    def max_id(self):
+        if not self.nodes:
+            return 0
+        return max(self.nodes.keys())
+
+    def shift_indices(self, n):
+       
+        self.inputs = [i + n for i in self.inputs]
+        self.outputs = [i + n for i in self.outputs]
+
+        new_nodes = {}
+        
+        for old_id, node_obj in self.nodes.items():
+            new_id = old_id + n
+            
+            node_obj.set_id(new_id)
+            
+            new_parents = {p_id + n: mult for p_id, mult in node_obj.get_parents().items()}
+            new_children = {c_id + n: mult for c_id, mult in node_obj.get_children().items()}
+            
+            node_obj.set_parents(new_parents)
+            node_obj.set_children(new_children)
+            
+            new_nodes[new_id] = node_obj
+            
+        self.nodes = new_nodes
