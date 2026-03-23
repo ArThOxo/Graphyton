@@ -3,6 +3,7 @@ import os
 import tempfile
 import unittest
 from modules.open_digraph import node, open_digraph
+from modules.bool_circ import bool_circ
 
 root = os.path.normpath(os.path.join(__file__, "./../.."))
 sys.path.append(root)
@@ -74,6 +75,12 @@ class NodeTest(unittest.TestCase):
         with self.assertRaises(KeyError):
             self.n0.remove_parent_id(99)
 
+
+    def test_degrees(self):
+        self.assertEqual(self.n0.indegree(), 1)
+        self.assertEqual(self.n0.outdegree(), 2)
+        self.assertEqual(self.n0.degree(), 3)
+
 class OpenDigraphTest(unittest.TestCase):
     def setUp(self):
         self.n0 = node(0, '', {}, {2: 1})
@@ -142,6 +149,55 @@ class OpenDigraphTest(unittest.TestCase):
             self.assertEqual(len(g_loaded.get_nodes()), len(self.g.get_nodes()))
         finally:
             os.remove(path)
+
+    def test_is_cyclic(self):
+        self.assertFalse(self.g.is_cyclic())
+        self.g.add_edge(2, 0)
+        self.assertTrue(self.g.is_cyclic())
+
+    def test_min_max_id(self):
+        self.assertEqual(self.g.min_id(), 0)
+        self.assertEqual(self.g.max_id(), 2)    
+        g_empty = open_digraph.empty()
+        self.assertEqual(g_empty.min_id(), 0)
+        self.assertEqual(g_empty.max_id(), 0)
+
+    def test_shift_indices(self):
+        self.g.shift_indices(10)
+        self.assertEqual(self.g.get_input_ids(), [10])
+        self.assertEqual(self.g.get_output_ids(), [11])
+        
+        self.assertIn(12, self.g.get_node_ids())
+        n12 = self.g.get_node_by_id(12)
+        self.assertEqual(n12.get_id(), 12)
+        
+        self.assertEqual(n12.get_parents(), {10: 1})
+        self.assertEqual(n12.get_children(), {11: 1})
+
+class BoolCircTest(unittest.TestCase):
+    def test_bool_circ_validation(self):
+        n0 = node(0, '', {}, {2: 1})
+        n2 = node(2, '', {0: 1}, {3: 1})
+        n3 = node(3, '~', {2: 1}, {1: 1}) 
+        n1 = node(1, '', {3: 1}, {})
+        g_valid = open_digraph([0], [1], [n0, n1, n2, n3])
+
+        bc = bool_circ(g_valid)
+        self.assertIsInstance(bc, bool_circ)
+        
+        n_and = node(4, '&', {0: 1}, {1: 2})
+        g_invalid = open_digraph([0], [1], [n0, n1, n_and])
+        
+        with self.assertRaises(ValueError):
+            bool_circ(g_invalid)
+            
+        n2_cycle = node(2, '', {3: 1}, {3: 1})
+        n3_cycle = node(3, '~', {2: 1}, {2: 1})
+        g_cycle = open_digraph([], [], [n2_cycle, n3_cycle])
+        
+        with self.assertRaises(ValueError):
+            bool_circ(g_cycle)
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
