@@ -86,6 +86,17 @@ class node:
             raise KeyError(f"Le noeud {id} n'est pas un enfant du noeud {self.id}.")
 
 
+    #TD 5
+    
+    def indegree(self):
+        return sum(self.parents.values())
+
+    def outdegree(self):
+        return sum(self.children.values())
+
+    def degree(self):
+        return self.indegree() + self.outdegree()
+
 class open_digraph:
     # TD 1
     def __init__(self, inputs, outputs, nodes):
