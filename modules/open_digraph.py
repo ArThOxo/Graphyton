@@ -602,3 +602,42 @@ class open_digraph:
         # entrées restent celles de self, mais les sorties deviennent celles de g_copy
         new_graph.outputs = g_copy.outputs
         return new_graph
+    
+
+    @classmethod
+    def identity(cls, n):
+        """
+        Crée un graphe 'Identité' de taille n, agissant comme l'élément neutre de la composition séquentielle
+
+        Structure attendue :
+        - Le graphe contient 2n nœuds au total
+        - n nœuds servent d'entrées (indices i_in)
+        - n nœuds servent de sorties (indices i_out)
+        - Pour chaque i allant de 0 à n-1, une arête unique est créée reliant le nœud d'entrée i au nœud de sortie i
+        
+        Propriétés :
+        - Les listes 'inputs' et 'outputs' du graphe ont une longueur de n
+        - Ce graphe ne modifie pas l'information mais se contente de la transmettre d'une couche à l'autre
+        """
+        # On commence par un graphe vide
+        g = cls.empty()
+        inputs = []
+        outputs = []
+        
+        for i in range(n):
+            # On crée un noeud pour l'entrée et un pour la sortie
+            in_id = g.add_node(label=f"in_{i}")
+            out_id = g.add_node(label=f"out_{i}")
+            
+            # On crée l'arête entre l'entrée et la sortie
+            g.add_edge(in_id, out_id)
+            
+            # On enregistre ces noeuds comme interfaces
+            inputs.append(in_id)
+            outputs.append(out_id)
+            
+        # On définit les listes d'entrées et de sorties du graphe
+        g.set_inputs(inputs)
+        g.set_outputs(outputs)
+        
+        return g
