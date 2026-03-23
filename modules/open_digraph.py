@@ -548,3 +548,57 @@ class open_digraph:
             new_nodes[new_id] = node_obj
             
         self.nodes = new_nodes
+
+    def comp_parallel(self, g):
+        """
+        Composition parallèle non-destructive : renvoie un nouveau graphe
+        """
+        #Copie des graphes pour en creer un nouveau (maniere non destructive)  
+        new_graph = self.copy()
+        g_copy = g.copy()
+        
+        # Calcule du décalage et application de shift indices
+        if new_graph.nodes:
+            shift = new_graph.max_id() - g_copy.min_id() + 1
+            g_copy.shift_indices(shift)
+            
+        # Update des noeuds
+        for id_noeud, obj_noeud in g_copy.nodes.items():
+            new_graph.nodes[id_noeud] = obj_noeud
+            
+        # Concatenation des entres
+        for id_entree in g_copy.inputs:
+            new_graph.inputs.append(id_entree)
+            
+        # Concatenations des sorties
+        for id_sortie in g_copy.outputs:
+            new_graph.outputs.append(id_sortie)
+            
+        return new_graph
+
+    def comp_sequentielle(self, g):
+        """
+        Composition séquentielle mutative : connecte les sorties de self aux entrées de g.
+        """
+        # vérification de compatibilité
+        if len(self.outputs) != len(g.inputs):
+            raise ValueError("Incompatibilité : le nombre de sorties de self ne correspond pas au nombre d'entrées de g.")
+            
+        # Préparation et évitement des collisions
+        # On travaille sur des copies pour ne pas changer les anciens graphes
+        new_graph = self.copy()
+        g_copy = g.copy()
+        if new_graph.nodes:
+            shift = new_graph.max_id() - g_copy.min_id() + 1
+            g_copy.shift_indices(shift)
+            
+        # Ajouts des noeuds de g_copy dans new_graph
+        new_graph.nodes.update(g_copy.nodes)
+        
+        # Connexion sorties self -> entrées g_copy
+        for out_id, in_id in zip(new_graph.outputs, g_copy.inputs):
+            new_graph.add_edge(out_id, in_id)
+            
+        # entrées restent celles de self, mais les sorties deviennent celles de g_copy
+        new_graph.outputs = g_copy.outputs
+        return new_graph

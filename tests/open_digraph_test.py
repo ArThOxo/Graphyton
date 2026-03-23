@@ -8,7 +8,7 @@ from modules.bool_circ import bool_circ
 root = os.path.normpath(os.path.join(__file__, "./../.."))
 sys.path.append(root)
 
-
+#python3 -m unittest discover tests "*_test.py" pour tester
 
 class InitTest(unittest.TestCase):
     def test_init_node(self):
