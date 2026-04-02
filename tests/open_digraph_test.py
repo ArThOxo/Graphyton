@@ -240,6 +240,51 @@ class OpenDigraphTest(unittest.TestCase):
             self.assertEqual(len(sub_g.get_input_ids()), 1)
             self.assertEqual(len(sub_g.get_output_ids()), 1)
 
+
+    def test_distances_and_paths(self):
+        n0 = node(0, 'n0', {}, {1: 1, 2: 1})
+        n1 = node(1, 'n1', {0: 1}, {3: 1})
+        n2 = node(2, 'n2', {0: 1, 5: 1}, {3: 1})
+        n3 = node(3, 'n3', {1: 1, 2: 1}, {4: 1})
+        n4 = node(4, 'n4', {3: 1}, {})
+        n5 = node(5, 'n5', {}, {2: 1})
+        
+        g = open_digraph([], [], [n0, n1, n2, n3, n4, n5])
+        
+        dist, prev = g.bfs(0, direction=1)
+        self.assertEqual(dist[0], 0)
+        self.assertEqual(dist[3], 2)
+        self.assertEqual(dist[4], 3)
+        self.assertNotIn(5, dist)
+        
+        dist_rev, prev_rev = g.bfs(3, direction=-1)
+        self.assertEqual(dist_rev[3], 0)
+        self.assertEqual(dist_rev[0], 2) 
+        self.assertEqual(dist_rev[5], 2)
+        
+        dist_tgt, prev_tgt = g.bfs(0, direction=1, tgt=1)
+        self.assertIn(1, dist_tgt)
+        self.assertNotIn(4, dist_tgt) 
+        
+        path = g.shortest_path(0, 4)
+        self.assertEqual(path[0], 0)
+        self.assertEqual(path[-1], 4)
+        self.assertEqual(len(path), 4)
+        
+        path_imp = g.shortest_path(4, 0)
+        self.assertEqual(path_imp, [])
+        
+        ancestors = g.common_ancestors(3, 4)
+        
+        self.assertIn(3, ancestors)
+        self.assertEqual(ancestors[3], (0, 1))
+        
+        self.assertIn(0, ancestors)
+        self.assertEqual(ancestors[0], (2, 3))
+        
+        self.assertIn(5, ancestors)
+        self.assertEqual(ancestors[5], (2, 3))
+
 class BoolCircTest(unittest.TestCase):
     def test_bool_circ_validation(self):
         n0 = node(0, '', {}, {2: 1})
