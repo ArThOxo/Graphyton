@@ -742,3 +742,129 @@ class open_digraph:
             graphs.append(new_graph)
             
         return graphs
+    
+    def bfs(self, src, direction=None, tgt=None):
+        """
+        Calcule les distances depuis un noeud source en utilisant un BFS.
+        Intègre un arrêt anticipé si tgt est atteint (Exercice 3).
+        Renvoie les dictionnaires dist et prev.
+        """
+        dist = {src: 0}
+        prev = {}
+        
+        # On utilise une liste comme file FIFO
+        file = [src]
+        
+        while file:
+            u = file.pop(0)
+            if tgt is not None and u == tgt:
+                break
+
+            noeud_u = self.get_node_by_id(u)
+            voisins = []
+            
+            # Choix voisins selon la direction
+            if direction == 1:
+                # Enfants
+                voisins = list(noeud_u.get_children().keys())
+            elif direction == -1:
+                # Parents
+                voisins = list(noeud_u.get_parents().keys())
+            else:
+                # Les deux
+                voisins = list(noeud_u.get_children().keys()) + list(noeud_u.get_parents().keys())
+                
+            # Parcours des voisins
+            for v in voisins:
+                if v not in dist:
+                    dist[v] = dist[u] + 1
+                    prev[v] = u
+                    file.append(v)
+                    
+        return dist, prev
+    
+
+    '''
+    Exo 3 TD7
+    Dans un algorithme de Parcours en Largeur,
+    les nœuds sont explorés par niveaux successifs de distance.
+    La distance d'un nœud découvert est strictement croissante.
+    Donc la toute première fois que l'algorithme extrait le nœud cible (tgt) de la file,
+    il est garanti que le chemin emprunté pour l'atteindre est le plus court possible.
+    C' est donc inutile d'explorer le reste de la file, ce qui permet d'économiser du temps de calcul.
+    '''
+
+    def shortest_path(self, u, v):
+        """
+        Calcule et renvoie la liste des noeuds formant 
+        le plus court chemin orienté de u vers v
+        """
+        # On lance le BFS avec direction=1 (car on cherche un chemin orienté) 
+        # et tgt=v pour l'arrêt anticipé.
+        dist, prev = self.bfs(src=u, direction=1, tgt=v)
+        
+        # Si v n'est pas dans dist, c'est qu'il est inatteignable depuis u
+        if v not in dist:
+            return []
+            
+        # Reconstruction du chemin en remontant le dictionnaire prev à l'envers
+        path = [v]
+        current = v
+        while current in prev:
+            current = prev[current]
+            path.append(current)
+            
+        # On remet le chemin dans le bon sens (de u vers v)
+        path.reverse()
+        return path
+    
+
+    def common_ancestors(self, node_1, node_2):
+        """
+        Trouve les ancêtres communs à node_1 et node_2
+        Renvoie un dictionnaire associant chaque ID d'ancêtre commun 
+        à un tuple de distances : (dist_vers_node1, dist_vers_node2)
+        """
+        # On lance un parcours en largeur "à l'envers" depuis les deux noeuds
+        dist1, _ = self.bfs(src=node_1, direction=-1)
+        dist2, _ = self.bfs(src=node_2, direction=-1)
+        
+        common = {}
+        
+        # On parcourt les ancêtres du premier noeud
+        for u in dist1:
+            # Si cet ancêtre est aussi un ancêtre du deuxième noeud
+            if u in dist2:
+                # On ajoute au dictionnaire le tuple des distances
+                common[u] = (dist1[u], dist2[u])
+                
+        return common
+    
+
+    '''
+    Exo 4 TD7
+    Pour implémenter cette fonction,
+    nous avons réutilisé notre méthode bfs avec son paramètre de direction.
+    Au lieu de rechercher les ancêtres de manière descendante,
+    nous avons adopté une approche ascendante :
+
+    Nous appelons bfs depuis le premier noeud cible avec direction = -1.
+    Cela nous retourne un dictionnaire contenant tous ses ancêtres et leur distance respective.
+    On fait de même pour le deuxième noeud cible
+    Il suffit ensuite de calculer l'intersection des clés de ces deux dictionnaires pour isoler les ancêtres communs.
+
+    Avantage : Cette méthode est performante car elle limite l'exploration à la stricte "généalogie" des deux nœuds,
+    sans avoir à parcourir ou vérifier le reste du graphe. Elle permet d'obtenir les deux distances en seulement deux parcours BFS
+    '''
+
+    '''
+    Exo 5 TD7
+    Contrairement à l'algorithme de Dijkstra envisagé à l'Exercice 1 pour sa robustesse,
+    nous avons implémenté un BFS avec dictionnaires, parfaitement adapté à nos distances de 1.
+    L'utilisation d'une simple liste (file FIFO) et d'un dictionnaire dist pour marquer les nœuds visités
+    rend le code très court et naturel à lire, évitant les lourdeurs de la recherche de minimum de Dijkstra
+    Le dictionnaire prev agit comme une trace GPS. En retenant le parent de chaque nœud,
+    il permet de reconstruire le plus court chemin par une simple remontée vers la source
+    Le paramètre de direction agit comme un simple filtre (enfants, parents ou les deux)
+    juste avant l'ajout des voisins dans la file, sans modifier la logique de l'algorithme.
+    '''
