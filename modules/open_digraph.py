@@ -905,7 +905,7 @@ class open_digraph:
 
     def profondeur_noeud(self, id_noeud):
         """
-        Calcule la profondeur d'un noeud donné en utilisant le tri topologique
+        Calcule la profondeur d'un noeud donné en utilisant le tri topologique.
         La profondeur correspond à l'indice du niveau dans lequel se trouve le noeud.
         """
         tri = self.tri_topologique()
@@ -914,3 +914,5 @@ class open_digraph:
         for profondeur, noeuds_niveau in enumerate(tri):
             if id_noeud in noeuds_niveau:
                 return profondeur
+                
+        raise ValueError(f"Le noeud {id_noeud} n'a pas été trouvé dans le tri topologique")
