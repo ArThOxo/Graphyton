@@ -916,3 +916,13 @@ class open_digraph:
                 return profondeur
                 
         raise ValueError(f"Le noeud {id_noeud} n'a pas été trouvé dans le tri topologique")
+    
+    def profondeur_graphe(self):
+        """
+        Calcule la profondeur totale du graphe.
+        Correspond à la profondeur maximale de ses noeuds (nombre de niveaux - 1).
+        """
+        tri = self.tri_topologique()
+        if not tri:
+            return 0
+        return len(tri) - 1
