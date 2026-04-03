@@ -868,3 +868,36 @@ class open_digraph:
     Le paramètre de direction agit comme un simple filtre (enfants, parents ou les deux)
     juste avant l'ajout des voisins dans la file, sans modifier la logique de l'algorithme.
     '''
+
+        #TD8
+ 
+    def tri_topologique(self):
+        """
+        Calcule le tri topologique vers le haut du graphe
+        Retourne une liste de listes d'ID de noeuds
+        Erreur si le graphe contient un cycle
+        """
+        # On ignore les entrées et sorties globales du graphe
+        node_ids = self.get_node_ids()
+        #calcule le nombre de parents pour chaque noeud
+        in_degrees = {}
+        for n_id in node_ids:
+            node = self.get_node_by_id(n_id)
+            parents_internes = [p for p in node.get_parents().keys() if p in node_ids]
+            in_degrees[n_id] = len(parents_internes)
+ 
+        result = []
+        while in_degrees:
+            # indentif des co_feuilles
+            co_feuilles = [n for n, deg in in_degrees.items() if deg == 0]
+            if not co_feuilles:
+                raise ValueError("Le graphe contient un cycle") # si il y a aucune co-feuilles mais qu'il reste des noeuds  = cycle
+            result.append(co_feuilles)
+            for n in co_feuilles:
+                node = self.get_node_by_id(n)
+                children = [c for c in node.get_children().keys() if c in in_degrees]
+                for child in children:
+                    in_degrees[child] -= 1
+                del in_degrees[n]
+ 
+        return result
