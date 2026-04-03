@@ -926,3 +926,37 @@ class open_digraph:
         if not tri:
             return 0
         return len(tri) - 1
+
+
+    def plus_long_chemin(self, u, v):
+        """
+        Calcule le plus long chemin entre le noeud u et le noeud v en utilisant le tri topologique
+        Retourne la liste des ID des noeuds formant ce plus long chemin.
+        """
+        tri_niveaux = self.tri_topologique()
+        ordre_topo = []
+        for niveau in tri_niveaux:
+            for noeud in niveau:
+                ordre_topo.append(noeud)  
+        distances = {u: 0}
+        precedents = {}
+        #Parcours des noeuds dans l'ordre topologique
+        for id_noeud in ordre_topo:
+            if id_noeud in distances:
+                noeud_courant = self.get_node_by_id(id_noeud)
+                enfants = noeud_courant.get_children().keys()
+                for enfant in enfants:
+                    nouvelle_distance = distances[id_noeud] + 1
+                    if enfant not in distances or nouvelle_distance > distances[enfant]:
+                        distances[enfant] = nouvelle_distance
+                        precedents[enfant] = id_noeud               
+        #Reconstruction du chemin
+        if v not in distances:
+            return []
+        chemin = [v]
+        courant = v
+        while courant in precedents:
+            courant = precedents[courant]
+            chemin.append(courant) 
+        chemin.reverse()
+        return chemin
