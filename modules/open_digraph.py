@@ -960,3 +960,40 @@ class open_digraph:
             chemin.append(courant) 
         chemin.reverse()
         return chemin
+
+#TD9
+
+    def merge_nodes(self, id1, id2):
+        """
+        Fusionne le noeud id2 dans le noeud id1. Le noeud id1 hérite de tous les parents, enfants et statuts (input/output) de id2.
+        Le noeud id2 est ensuite supprimé.
+        """
+        if id1 not in self.nodes or id2 not in self.nodes:
+            raise ValueError("Les IDs fournis ne sont pas dans le graphe.")
+
+        n1 = self.nodes[id1]
+        n2 = self.nodes[id2]
+
+        # on transfére les enfants de id2 vers id1
+        for child_id, mult in n2.get_children().copy().items():
+            if child_id != id1: # On évite de créer une auto-boucle sur id1
+                n1.add_child_id(child_id, mult)
+                self.nodes[child_id].add_parent_id(id1, mult)
+
+        # on transfére les parents de id2 vers id1
+        for parent_id, mult in n2.get_parents().copy().items():
+            if parent_id != id1: # on évite l'auto-boucle
+                n1.add_parent_id(parent_id, mult)
+                self.nodes[parent_id].add_child_id(id1, mult)
+
+        # on ransfére les statuts d'entrée/sortie globales
+        if id2 in self.inputs:
+            if id1 not in self.inputs:
+                self.inputs.append(id1)
+                
+        if id2 in self.outputs:
+            if id1 not in self.outputs:
+                self.outputs.append(id1)
+
+        # pour supprimer proprement l'ancien noeud id2
+        self.remove_node_by_id(id2)

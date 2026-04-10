@@ -285,6 +285,45 @@ class OpenDigraphTest(unittest.TestCase):
         self.assertIn(5, ancestors)
         self.assertEqual(ancestors[5], (2, 3))
 
+    def test_td8_and_merge(self):
+        
+        n0 = node(0, 'n0', {}, {1: 1, 2: 1})
+        n1 = node(1, 'n1', {0: 1}, {3: 1})
+        n2 = node(2, 'n2', {0: 1}, {3: 1})
+        n3 = node(3, 'n3', {1: 1, 2: 1}, {4: 1})
+        n4 = node(4, 'n4', {3: 1}, {})
+        
+        g = open_digraph([], [], [n0, n1, n2, n3, n4])
+        
+        tri = g.tri_topologique()
+        self.assertIn(0, tri[0])
+        self.assertIn(1, tri[1])
+        self.assertIn(3, tri[2])
+        self.assertIn(4, tri[3])
+        
+        
+        g.add_edge(4, 0)
+        with self.assertRaises(ValueError):
+            g.tri_topologique()
+        g.remove_edge(4, 0)
+        
+        self.assertEqual(g.profondeur_noeud(0), 0)
+        self.assertEqual(g.profondeur_noeud(3), 2)
+        self.assertEqual(g.profondeur_graphe(), 3)
+
+        chemin = g.plus_long_chemin(0, 4)
+        self.assertEqual(chemin[0], 0)
+        self.assertEqual(chemin[-1], 4)
+        self.assertEqual(len(chemin), 4)
+        
+        g.merge_nodes(1, 2)
+        
+        self.assertNotIn(2, g.get_node_ids())
+        
+        noeud1 = g.get_node_by_id(1)
+        self.assertEqual(noeud1.get_parents()[0], 2)
+        self.assertEqual(noeud1.get_children()[3], 2)
+
 class BoolCircTest(unittest.TestCase):
     def test_bool_circ_validation(self):
         n0 = node(0, '', {}, {2: 1})
@@ -308,6 +347,22 @@ class BoolCircTest(unittest.TestCase):
         
         with self.assertRaises(ValueError):
             bool_circ(g_cycle)
+    
+    def test_parsing_formulas(self):
+        formule = "((x0)&(x1))"
+        arbre = bool_circ.parse_from_string(formule)
+        
+        self.assertEqual(len(arbre.get_node_ids()), 4)
+        self.assertEqual(len(arbre.get_output_ids()), 1)
+        
+        formule_repete = "((x0)&(x0))"
+        circuit, variables = bool_circ.from_string(formule_repete)
+        
+        self.assertEqual(variables, ['x0'])
+        self.assertEqual(len(circuit.get_node_ids()), 4)
+        self.assertTrue(circuit.is_well_formed())
+        self.assertEqual(len(circuit.get_input_ids()), 1)
+    
 
 
 if __name__ == '__main__':
