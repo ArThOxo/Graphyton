@@ -99,42 +99,44 @@ class bool_circ(open_digraph):
 
 
     @classmethod
-    def from_string(cls, s):
+    def from_string(cls, *args):
         """
-        Construit un vrai circuit booléen à partir d'une formule.
-        Regroupe les variables identiques, nettoie les labels et retourne le tuple (bool_circ, liste_variables).
+        Construit un vrai circuit booléen à partir de plusieurs formules.
+        Regroupe les variables identiques, et gère plusieurs sorties
+        Prend un nombre variable de chaînes de caractères en argument
         """
-        # on utilise notre méthode de l'exo 1 pour avoir l'arbre brut
-        arbre = cls.parse_from_string(s)
+        if not args:
+            raise ValueError("Il faut au moins une formule en argument")
+        arbre_global = cls.parse_from_string(args[0])
+
+        for s in args[1:]:
+            arbre_temp = cls.parse_from_string(s)
+            arbre_global = arbre_global.comp_parallel(arbre_temp)
+
+        variables_vues = {}
+        noms_variables = []
         
-        variables_vues = {} # Dict {nom_variable: id_noeud}
-        noms_variables = [] # Liste pour garder le bon ordre
-        
-        # on identifie les feuilles de l'arbre  ce qui portent temporairement les noms des variables
-        feuilles = [n.get_id() for n in arbre.get_nodes() if not n.get_parents()]
+        feuilles = [n.get_id() for n in arbre_global.get_nodes() if not n.get_parents()]
         
         for id_feuille in feuilles:
-            noeud = arbre.get_node_by_id(id_feuille)
+            noeud = arbre_global.get_node_by_id(id_feuille)
             nom_var = noeud.get_label()
+
+            if not nom_var:
+                continue
             
-            # Cas 1 :  nouvelle variable
             if nom_var not in variables_vues:
                 variables_vues[nom_var] = id_feuille
                 noms_variables.append(nom_var)
                 
-                # On la définit comme une entrée officielle du graphe
-                arbre.add_input_node(id_feuille)
+                arbre_global.add_input_node(id_feuille)
                 
-                # On supprime le texte pour que le circuit soit bien formé
                 noeud.set_label("")
-                
-            # Cas 2 : on a déjà vu cette variable ailleurs
+
             else:
                 id_premier = variables_vues[nom_var]
-                # on fusionne le noeud actuel dans le premier noeud trouvé
-                arbre.merge_nodes(id_premier, id_feuille)
+                arbre_global.merge_nodes(id_premier, id_feuille)
                 
-        # le graphe est nettoyé et bien formé, donc on peut l'encapsuler dans notre classe bool_circ
-        circuit_final = cls(arbre)
+        circuit_final = cls(arbre_global)
         
         return circuit_final, noms_variables

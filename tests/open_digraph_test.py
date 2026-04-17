@@ -348,7 +348,7 @@ class BoolCircTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             bool_circ(g_cycle)
     
-    def test_parsing_formulas(self):
+    def test_parsing_formules(self):
         formule = "((x0)&(x1))"
         arbre = bool_circ.parse_from_string(formule)
         
@@ -362,6 +362,15 @@ class BoolCircTest(unittest.TestCase):
         self.assertEqual(len(circuit.get_node_ids()), 4)
         self.assertTrue(circuit.is_well_formed())
         self.assertEqual(len(circuit.get_input_ids()), 1)
+        #ex4 Td9
+        f1 = "((x0)&(x1))"
+        f2 = "(~(x1))"
+        circuit_multi, variables_multi = bool_circ.from_string(f1, f2)
+
+        self.assertTrue(circuit_multi.is_well_formed())
+        self.assertEqual(len(circuit_multi.get_output_ids()), 2)
+        self.assertEqual(len(circuit_multi.get_input_ids()), 2)
+        self.assertCountEqual(variables_multi, ['x0', 'x1'])
     
 
 
