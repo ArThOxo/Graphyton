@@ -1,4 +1,5 @@
 from modules.open_digraph import open_digraph
+import random
 
 class bool_circ(open_digraph):
     def __init__(self, g):
@@ -28,7 +29,7 @@ class bool_circ(open_digraph):
                 if indeg != 1:
                     return False
                     
-            elif label == '&' or label == '|': 
+            elif label == '&' or label == '|' or label == '^': 
                 if outdeg != 1:
                     return False
                     
@@ -42,6 +43,61 @@ class bool_circ(open_digraph):
                     
         return True
 
+    @classmethod
+    def random_bool_circ(cls, n, bound):
+        """
+        TD10: Exercice 1
+        Génère un circuit booléen aléatoire valide.
+        """
+        g = open_digraph.random(n, bound, form="DAG")
+        
+        # 1. Supprimer les noeuds isolés
+        node_ids = set(g.get_node_ids())
+        for node_id in node_ids:
+            node = g.get_node_by_id(node_id)
+            if node.indegree() == 0 and node.outdegree() == 0:
+                g.remove_node_by_id(node_id)
+                
+        # On récupère les IDs des noeuds originels restants
+        original_node_ids = g.get_node_ids()
+        
+        # S'il ne reste aucun noeud, on retourne un circuit vide
+        if not original_node_ids:
+            return cls(g)
+        
+        # 2. Ajouter les inputs et outputs
+        for node_id in original_node_ids:
+            node = g.get_node_by_id(node_id)
+            if node.indegree() == 0:
+                g.add_input_node(node_id)
+            if node.outdegree() == 0:
+                g.add_output_node(node_id)
+        
+        # 3. Assigner les labels et traiter les sorties multiples (fan-out)
+        for node_id in original_node_ids:
+            node = g.get_node_by_id(node_id)
+            indeg = node.indegree()
+            outdeg = node.outdegree()
+            
+            if indeg == 1:
+                node.set_label(random.choice(['', '~']))
+            elif indeg >= 2 and outdeg == 1:
+                node.set_label(random.choice(['&', '|', '^']))
+            elif indeg >= 2 and outdeg >= 2:
+                # Porte logique avec fan-out
+                node.set_label(random.choice(['&', '|', '^']))
+                # On crée un noeud de copie
+                copy_id = g.add_node(label='')
+                # On déplace les enfants vers le noeud de copie
+                children = list(node.get_children().items())
+                for child_id, mult in children:
+                    g.remove_parallel_edges(node_id, child_id)
+                    for _ in range(mult):
+                        g.add_edge(copy_id, child_id)
+                # On relie la porte au noeud de copie
+                g.add_edge(node_id, copy_id)
+                
+        return cls(g)
 
 #TD9
 

@@ -347,6 +347,12 @@ class BoolCircTest(unittest.TestCase):
         
         with self.assertRaises(ValueError):
             bool_circ(g_cycle)
+
+    def test_random_bool_circ(self):
+        for _ in range(10):
+            bc = bool_circ.random_bool_circ(n=10, bound=2)
+            self.assertIsInstance(bc, bool_circ)
+            self.assertTrue(bc.is_well_formed())
     
     def test_parsing_formules(self):
         formule = "((x0)&(x1))"
