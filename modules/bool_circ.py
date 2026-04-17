@@ -80,11 +80,14 @@ class bool_circ(open_digraph):
             outdeg = node.outdegree()
             
             if indeg == 1:
-                node.set_label(random.choice(['', '~']))
+                if outdeg == 1:
+                    node.set_label(random.choice(['', '~']))
+                else:
+                    node.set_label('')
             elif indeg >= 2 and outdeg == 1:
                 node.set_label(random.choice(['&', '|', '^']))
-            elif indeg >= 2 and outdeg >= 2:
-                # Porte logique avec fan-out
+            elif indeg >= 2 and outdeg != 1:
+                # Porte logique avec fan-out ou sans sortie apparente
                 node.set_label(random.choice(['&', '|', '^']))
                 # On crée un noeud de copie
                 copy_id = g.add_node(label='')
@@ -95,6 +98,86 @@ class bool_circ(open_digraph):
                     for _ in range(mult):
                         g.add_edge(copy_id, child_id)
                 # On relie la porte au noeud de copie
+                g.add_edge(node_id, copy_id)
+                
+        return cls(g)
+
+    @classmethod
+    def random_bool_circ_with_io(cls, n, bound, nb_inputs, nb_outputs):
+        """
+        TD10: Exercice 2
+        Génère un circuit booléen aléatoire avec un nombre fixe d'entrées et de sorties.
+        """
+        import random
+        while True:
+            g = open_digraph.random(n, bound, form="DAG")
+            node_ids = set(g.get_node_ids())
+            for node_id in node_ids:
+                node = g.get_node_by_id(node_id)
+                if node.indegree() == 0 and node.outdegree() == 0:
+                    g.remove_node_by_id(node_id)
+            original_node_ids = g.get_node_ids()
+            if original_node_ids:
+                break
+                
+        # 1. Ajouter les inputs pour les co-feuilles et outputs pour les feuilles
+        for node_id in original_node_ids:
+            node = g.get_node_by_id(node_id)
+            if node.indegree() == 0:
+                g.add_input_node(node_id)
+            if node.outdegree() == 0:
+                g.add_output_node(node_id)
+                
+        # 2. Ajuster le nombre d'entrées
+        inputs = g.get_input_ids()
+        while len(inputs) < nb_inputs:
+            tgt = random.choice(original_node_ids)
+            g.add_input_node(tgt)
+            inputs = g.get_input_ids()
+            
+        while len(inputs) > nb_inputs:
+            in_to_remove = inputs[-1]
+            tgt_to_remove = list(g.get_node_by_id(in_to_remove).get_children().keys())[0]
+            g.remove_node_by_id(in_to_remove)
+            
+            # Pour ne pas laisser une ancienne co-feuille avec indegree 0, on lui connecte une constante
+            const_id = g.add_node(label=random.choice(['0', '1']))
+            g.add_edge(const_id, tgt_to_remove)
+            inputs = g.get_input_ids()
+            
+        # 3. Ajuster le nombre de sorties
+        outputs = g.get_output_ids()
+        while len(outputs) < nb_outputs:
+            src = random.choice(original_node_ids)
+            g.add_output_node(src)
+            outputs = g.get_output_ids()
+            
+        while len(outputs) > nb_outputs:
+            out_to_remove = outputs[-1]
+            g.remove_node_by_id(out_to_remove)
+            outputs = g.get_output_ids()
+            
+        # 4. Assigner les labels aux noeuds originaux
+        for node_id in original_node_ids:
+            node = g.get_node_by_id(node_id)
+            indeg = node.indegree()
+            outdeg = node.outdegree()
+            
+            if indeg == 1:
+                if outdeg == 1:
+                    node.set_label(random.choice(['', '~']))
+                else:
+                    node.set_label('')
+            elif indeg >= 2 and outdeg == 1:
+                node.set_label(random.choice(['&', '|', '^']))
+            elif indeg >= 2 and outdeg != 1:
+                node.set_label(random.choice(['&', '|', '^']))
+                copy_id = g.add_node(label='')
+                children = list(node.get_children().items())
+                for child_id, mult in children:
+                    g.remove_parallel_edges(node_id, child_id)
+                    for _ in range(mult):
+                        g.add_edge(copy_id, child_id)
                 g.add_edge(node_id, copy_id)
                 
         return cls(g)
