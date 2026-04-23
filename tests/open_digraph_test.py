@@ -386,6 +386,42 @@ class BoolCircTest(unittest.TestCase):
         self.assertEqual(len(circuit_multi.get_input_ids()), 2)
         self.assertCountEqual(variables_multi, ['x0', 'x1'])
     
+    def test_adder(self):
+        # Test Adder0 (1 bit)
+        adder0 = bool_circ.Adder(0)
+        self.assertIsInstance(adder0, bool_circ)
+        self.assertEqual(len(adder0.get_input_ids()), 3)    # a, b, carry_in
+        self.assertEqual(len(adder0.get_output_ids()), 2)   # sum, carry_out
+        self.assertTrue(adder0.is_well_formed())
+        
+        # Test Adder1 (2 bits)
+        adder1 = bool_circ.Adder(1)
+        self.assertIsInstance(adder1, bool_circ)
+        self.assertEqual(len(adder1.get_input_ids()), 5)    # a0, a1, b0, b1, carry_in
+        self.assertEqual(len(adder1.get_output_ids()), 3)   # r0, r1, carry_out
+        self.assertTrue(adder1.is_well_formed())
+        
+        # Test Adder2 (4 bits)
+        adder2 = bool_circ.Adder(2)
+        self.assertIsInstance(adder2, bool_circ)
+        self.assertEqual(len(adder2.get_input_ids()), 9)    # 4a + 4b + carry_in
+        self.assertEqual(len(adder2.get_output_ids()), 5)   # 4r + carry_out
+        self.assertTrue(adder2.is_well_formed())
+
+    def test_half_adder(self):
+        # Test Half_Adder0 (1 bit, sans carry_in)
+        ha0 = bool_circ.Half_Adder(0)
+        self.assertIsInstance(ha0, bool_circ)
+        self.assertEqual(len(ha0.get_input_ids()), 2)       # a, b
+        self.assertEqual(len(ha0.get_output_ids()), 2)      # sum, carry_out
+        self.assertTrue(ha0.is_well_formed())
+        
+        # Test Half_Adder1 (2 bits, sans carry_in)
+        ha1 = bool_circ.Half_Adder(1)
+        self.assertIsInstance(ha1, bool_circ)
+        self.assertEqual(len(ha1.get_input_ids()), 4)       # a0, a1, b0, b1
+        self.assertEqual(len(ha1.get_output_ids()), 3)      # r0, r1, carry_out
+        self.assertTrue(ha1.is_well_formed())
 
 
 if __name__ == '__main__':

@@ -279,3 +279,152 @@ class bool_circ(open_digraph):
         circuit_final = cls(arbre_global)
         
         return circuit_final, noms_variables
+
+#TD10
+
+    @classmethod
+    def _build_adder0(cls):
+        """
+        Construit le circuit de base Adder0 (additionneur 1 bit complet).
+        Entrées : a, b, carry_in (3 entrées)
+        Sorties : somme, carry_out (2 sorties)
+        
+        somme     = a ⊕ b ⊕ carry_in
+        carry_out = (a & b) | ((a ⊕ b) & carry_in)
+        
+        Retourne un open_digraph (non validé comme bool_circ).
+        """
+        g = open_digraph.empty()
+        
+        # Noeuds internes
+        copy_a = g.add_node(label='')       # distribue a vers xor1 et and1
+        copy_b = g.add_node(label='')       # distribue b vers xor1 et and1
+        copy_cin = g.add_node(label='')     # distribue carry_in vers xor2 et and2
+        xor1 = g.add_node(label='^')        # a ⊕ b
+        and1 = g.add_node(label='&')        # a & b
+        copy_xor1 = g.add_node(label='')    # distribue (a⊕b) vers xor2 et and2
+        xor2 = g.add_node(label='^')        # (a⊕b) ⊕ carry_in = somme
+        and2 = g.add_node(label='&')        # (a⊕b) & carry_in
+        or1 = g.add_node(label='|')         # (a&b) | ((a⊕b)&carry_in) = carry_out
+        
+        # Câblage interne
+        g.add_edge(copy_a, xor1)
+        g.add_edge(copy_a, and1)
+        g.add_edge(copy_b, xor1)
+        g.add_edge(copy_b, and1)
+        g.add_edge(xor1, copy_xor1)
+        g.add_edge(copy_xor1, xor2)
+        g.add_edge(copy_xor1, and2)
+        g.add_edge(copy_cin, xor2)
+        g.add_edge(copy_cin, and2)
+        g.add_edge(and1, or1)
+        g.add_edge(and2, or1)
+        
+        # Interface d'entrée : a, b, carry_in
+        g.add_input_node(copy_a)
+        g.add_input_node(copy_b)
+        g.add_input_node(copy_cin)
+        
+        # Interface de sortie : somme, carry_out
+        g.add_output_node(xor2)
+        g.add_output_node(or1)
+        
+        return g
+
+    @classmethod
+    def _build_adder(cls, n):
+        """
+        Construit récursivement un additionneur Adder_n.
+        Taille du registre : s = 2^n bits.
+        Entrées : a[0..s-1], b[0..s-1], carry_in   (total : 2s + 1)
+        Sorties : r[0..s-1], carry_out               (total : s + 1)
+        
+        Construction inductive :
+        - On compose en parallèle deux Adder_{n-1} (bits de poids faible et poids fort)
+        - On connecte la retenue sortante du bloc bas vers l'entrée retenue du bloc haut
+        
+        Retourne un open_digraph (non validé comme bool_circ).
+        """
+        if n == 0:
+            return cls._build_adder0()
+        
+        half = 2 ** (n - 1)  # taille du registre des sous-additionneurs
+        
+        adder_low = cls._build_adder(n - 1)
+        adder_high = cls._build_adder(n - 1)
+        
+        # Composition parallèle des deux sous-additionneurs
+        g = adder_low.comp_parallel(adder_high)
+        
+        inputs = g.get_input_ids()
+        outputs = g.get_output_ids()
+        
+        # Identification des noeuds de retenue à connecter
+        # carry_out du sous-additionneur bas = dernier output du bloc bas
+        c_out_low_id = outputs[half]
+        # carry_in du sous-additionneur haut = dernier input du bloc haut
+        c_in_high_id = inputs[-1]
+        
+        # Trouver les noeuds internes connectés aux interfaces de retenue
+        c_out_low_parent = list(g.get_node_by_id(c_out_low_id).get_parents().keys())[0]
+        c_in_high_child = list(g.get_node_by_id(c_in_high_id).get_children().keys())[0]
+        
+        # Supprimer les noeuds d'interface de retenue (les retire aussi des listes inputs/outputs)
+        g.remove_node_by_id(c_out_low_id)
+        g.remove_node_by_id(c_in_high_id)
+        
+        # Connecter la retenue du bas vers l'entrée du haut en interne
+        g.add_edge(c_out_low_parent, c_in_high_child)
+        
+        # Réordonner les entrées pour respecter la convention :
+        # Actuel : [a_low(h), b_low(h), c_in, a_high(h), b_high(h)]
+        # Voulu  : [a_low(h), a_high(h), b_low(h), b_high(h), c_in]
+        inputs = g.get_input_ids()
+        a_low = inputs[0:half]
+        b_low = inputs[half:2*half]
+        c_in = [inputs[2*half]]
+        a_high = inputs[2*half+1:3*half+1]
+        b_high = inputs[3*half+1:4*half+1]
+        
+        g.set_inputs(a_low + a_high + b_low + b_high + c_in)
+        
+        # Les sorties sont déjà dans le bon ordre : [r_low(h), r_high(h), c_out]
+        
+        return g
+
+    @classmethod
+    def Adder(cls, n):
+        """
+        Construit un additionneur Adder_n validé comme circuit booléen.
+        Taille du registre : s = 2^n bits.
+        Entrées : a[0..s-1], b[0..s-1], carry_in   (total : 2s + 1)
+        Sorties : r[0..s-1], carry_out               (total : s + 1)
+        """
+        g = cls._build_adder(n)
+        return cls(g)
+
+    @classmethod
+    def Half_Adder(cls, n):
+        """
+        Construit un Half_Adder_n : additionneur sans retenue d'entrée.
+        La retenue d'entrée est remplacée par une constante 0.
+        Taille du registre : s = 2^n bits.
+        Entrées : a[0..s-1], b[0..s-1]   (total : 2s)
+        Sorties : r[0..s-1], carry_out     (total : s + 1)
+        """
+        g = cls._build_adder(n)
+        
+        inputs = g.get_input_ids()
+        c_in_id = inputs[-1]  # carry_in est toujours la dernière entrée
+        
+        # Trouver le noeud interne connecté au carry_in
+        c_in_child = list(g.get_node_by_id(c_in_id).get_children().keys())[0]
+        
+        # Supprimer le noeud d'entrée carry_in
+        g.remove_node_by_id(c_in_id)
+        
+        # Ajouter une constante 0 à la place
+        zero_id = g.add_node(label='0')
+        g.add_edge(zero_id, c_in_child)
+        
+        return cls(g)
