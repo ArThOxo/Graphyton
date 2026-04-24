@@ -11,6 +11,17 @@ class bool_circ(open_digraph):
             raise ValueError("Le graphe fourni n'est pas un circuit booléen valide")
 
     def is_well_formed(self):
+        """
+        TD11 Exercice 1 : Validation d'un circuit booléen.
+        
+        Contraintes structurelles par type de noeud :
+        - '' (copie/fil) : indegree == 1, outdegree quelconque (y compris 0 = effacement)
+        - '&' (ET)       : outdegree == 1, indegree quelconque
+        - '|' (OU)       : outdegree == 1, indegree quelconque
+        - '^' (XOR)      : outdegree == 1, indegree quelconque
+        - '~' (NON)      : indegree == 1, outdegree == 1
+        - '0', '1'       : indegree == 0 (constantes sources)
+        """
         if not super().is_well_formed():
             return False
             
@@ -26,19 +37,23 @@ class bool_circ(open_digraph):
             outdeg = n.outdegree()
             
             if label == '': 
+                # Copie : indegree == 1, outdegree libre (0 = effacement de données)
                 if indeg != 1:
                     return False
                     
-            elif label == '&' or label == '|' or label == '^': 
+            elif label in ('&', '|', '^'): 
+                # Portes logiques : outdegree == 1
                 if outdeg != 1:
                     return False
                     
             elif label == '~': 
+                # Porte NON : indegree == 1, outdegree == 1
                 if indeg != 1 or outdeg != 1:
                     return False
                     
-            elif label == '0' or label == '1':
-                if indeg != 0 or outdeg != 1:
+            elif label in ('0', '1'):
+                # Constantes : indegree == 0 (sources pures)
+                if indeg != 0:
                     return False
                     
         return True
@@ -279,6 +294,27 @@ class bool_circ(open_digraph):
         circuit_final = cls(arbre_global)
         
         return circuit_final, noms_variables
+
+#TD11
+
+    @classmethod
+    def from_integer(cls, n, size=8):
+        if n < 0:
+            raise ValueError("Seuls les entiers non signés sont acceptés")
+        if n >= 2 ** size:
+            raise ValueError(
+                f"L'entier {n} ne tient pas dans un registre de {size} bits "
+                f"(max = {2**size - 1})"
+            )
+
+        bits = bin(n)[2:].zfill(size)
+
+        g = open_digraph.empty()
+        for bit in bits:
+            const_id = g.add_node(label=bit)
+            g.add_output_node(const_id)
+
+        return cls(g)
 
 #TD10
 
