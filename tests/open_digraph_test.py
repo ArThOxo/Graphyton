@@ -390,38 +390,406 @@ class BoolCircTest(unittest.TestCase):
         # Test Adder0 (1 bit)
         adder0 = bool_circ.Adder(0)
         self.assertIsInstance(adder0, bool_circ)
-        self.assertEqual(len(adder0.get_input_ids()), 3)    # a, b, carry_in
-        self.assertEqual(len(adder0.get_output_ids()), 2)   # sum, carry_out
+        self.assertEqual(len(adder0.get_input_ids()), 3)
+        self.assertEqual(len(adder0.get_output_ids()), 2)
         self.assertTrue(adder0.is_well_formed())
         
         # Test Adder1 (2 bits)
         adder1 = bool_circ.Adder(1)
         self.assertIsInstance(adder1, bool_circ)
-        self.assertEqual(len(adder1.get_input_ids()), 5)    # a0, a1, b0, b1, carry_in
-        self.assertEqual(len(adder1.get_output_ids()), 3)   # r0, r1, carry_out
+        self.assertEqual(len(adder1.get_input_ids()), 5)
+        self.assertEqual(len(adder1.get_output_ids()), 3)
         self.assertTrue(adder1.is_well_formed())
         
         # Test Adder2 (4 bits)
         adder2 = bool_circ.Adder(2)
         self.assertIsInstance(adder2, bool_circ)
-        self.assertEqual(len(adder2.get_input_ids()), 9)    # 4a + 4b + carry_in
-        self.assertEqual(len(adder2.get_output_ids()), 5)   # 4r + carry_out
+        self.assertEqual(len(adder2.get_input_ids()), 9)
+        self.assertEqual(len(adder2.get_output_ids()), 5)
         self.assertTrue(adder2.is_well_formed())
 
     def test_half_adder(self):
         # Test Half_Adder0 (1 bit, sans carry_in)
         ha0 = bool_circ.Half_Adder(0)
         self.assertIsInstance(ha0, bool_circ)
-        self.assertEqual(len(ha0.get_input_ids()), 2)       # a, b
-        self.assertEqual(len(ha0.get_output_ids()), 2)      # sum, carry_out
+        self.assertEqual(len(ha0.get_input_ids()), 2)
+        self.assertEqual(len(ha0.get_output_ids()), 2)
         self.assertTrue(ha0.is_well_formed())
         
         # Test Half_Adder1 (2 bits, sans carry_in)
         ha1 = bool_circ.Half_Adder(1)
         self.assertIsInstance(ha1, bool_circ)
-        self.assertEqual(len(ha1.get_input_ids()), 4)       # a0, a1, b0, b1
-        self.assertEqual(len(ha1.get_output_ids()), 3)      # r0, r1, carry_out
+        self.assertEqual(len(ha1.get_input_ids()), 4)
+        self.assertEqual(len(ha1.get_output_ids()), 3)
         self.assertTrue(ha1.is_well_formed())
+
+
+# TD11 Exercice 3 : tests des règles de transformation
+
+class TransformTest(unittest.TestCase):
+    """Tests unitaires pour chaque règle de transformation booléenne."""
+
+    # _transform_copy
+
+    def test_transform_copy_propagates_zero(self):
+        n0 = node(0, '0', {}, {1: 1})
+        n1 = node(1, '',  {0: 1}, {2: 1, 3: 1})
+        n2 = node(2, '',  {1: 1}, {})
+        n3 = node(3, '',  {1: 1}, {})
+        g = open_digraph([], [2, 3], [n0, n1, n2, n3])
+        bc = bool_circ.__new__(bool_circ)
+        bc.__init__.__func__ if False else None
+        open_digraph.__init__(bc, g.get_input_ids(), g.get_output_ids(),
+                              [n.copy() for n in g.get_nodes()])
+
+        result = bc._transform_copy(1)
+        self.assertTrue(result)
+        self.assertNotIn(0, bc.get_node_ids())
+        self.assertNotIn(1, bc.get_node_ids())
+        for out_id in [2, 3]:
+            parents = bc.get_node_by_id(out_id).get_parents()
+            parent_labels = [bc.get_node_by_id(pid).get_label() for pid in parents]
+            self.assertIn('0', parent_labels)
+
+    def test_transform_copy_propagates_one(self):
+        n0 = node(0, '1', {}, {1: 1})
+        n1 = node(1, '',  {0: 1}, {2: 1})
+        n2 = node(2, '',  {1: 1}, {})
+        g = open_digraph([], [2], [n0, n1, n2])
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc, [], [2], [n.copy() for n in g.get_nodes()])
+
+        self.assertTrue(bc._transform_copy(1))
+        self.assertNotIn(1, bc.get_node_ids())
+        parent_labels = [bc.get_node_by_id(pid).get_label()
+                         for pid in bc.get_node_by_id(2).get_parents()]
+        self.assertIn('1', parent_labels)
+
+    def test_transform_copy_no_const_parent(self):
+        n0 = node(0, 'x', {}, {1: 1})
+        n1 = node(1, '',  {0: 1}, {2: 1})
+        n2 = node(2, '',  {1: 1}, {})
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc, [], [2], [n0.copy(), n1.copy(), n2.copy()])
+        self.assertFalse(bc._transform_copy(1))
+
+    # _transform_not
+
+    def test_transform_not_zero_gives_one(self):
+        n0 = node(0, '0', {}, {1: 1})
+        n1 = node(1, '~', {0: 1}, {2: 1})
+        n2 = node(2, '',  {1: 1}, {})
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc, [], [2], [n0.copy(), n1.copy(), n2.copy()])
+
+        self.assertTrue(bc._transform_not(1))
+        self.assertNotIn(1, bc.get_node_ids())
+        parent_labels = [bc.get_node_by_id(pid).get_label()
+                         for pid in bc.get_node_by_id(2).get_parents()]
+        self.assertIn('1', parent_labels)
+
+    def test_transform_not_one_gives_zero(self):
+        n0 = node(0, '1', {}, {1: 1})
+        n1 = node(1, '~', {0: 1}, {2: 1})
+        n2 = node(2, '',  {1: 1}, {})
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc, [], [2], [n0.copy(), n1.copy(), n2.copy()])
+
+        self.assertTrue(bc._transform_not(1))
+        parent_labels = [bc.get_node_by_id(pid).get_label()
+                         for pid in bc.get_node_by_id(2).get_parents()]
+        self.assertIn('0', parent_labels)
+
+    def test_transform_not_wrong_label(self):
+        n0 = node(0, '0', {}, {1: 1})
+        n1 = node(1, '&', {0: 1}, {2: 1})
+        n2 = node(2, '',  {1: 1}, {})
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc, [], [2], [n0.copy(), n1.copy(), n2.copy()])
+        self.assertFalse(bc._transform_not(1))
+
+    # _transform_and
+
+    def test_transform_and_zero_absorbing(self):
+        n0 = node(0, '0', {}, {2: 1})
+        n1 = node(1, 'x', {}, {2: 1})
+        n2 = node(2, '&', {0: 1, 1: 1}, {3: 1})
+        n3 = node(3, '',  {2: 1}, {})
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc, [], [3], [n0.copy(), n1.copy(), n2.copy(), n3.copy()])
+
+        self.assertTrue(bc._transform_and(2))
+        self.assertNotIn(2, bc.get_node_ids())
+        parent_labels = [bc.get_node_by_id(pid).get_label()
+                         for pid in bc.get_node_by_id(3).get_parents()]
+        self.assertIn('0', parent_labels)
+
+    def test_transform_and_one_neutral(self):
+        n0 = node(0, '1', {}, {2: 1})
+        n1 = node(1, 'x', {}, {2: 1})
+        n2 = node(2, '&', {0: 1, 1: 1}, {3: 1})
+        n3 = node(3, '',  {2: 1}, {})
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc, [], [3], [n0.copy(), n1.copy(), n2.copy(), n3.copy()])
+
+        self.assertTrue(bc._transform_and(2))
+        self.assertNotIn(0, bc.get_node_ids())
+        self.assertIn(2, bc.get_node_ids())
+
+    def test_transform_and_no_const(self):
+        n0 = node(0, 'x', {}, {2: 1})
+        n1 = node(1, 'y', {}, {2: 1})
+        n2 = node(2, '&', {0: 1, 1: 1}, {3: 1})
+        n3 = node(3, '',  {2: 1}, {})
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc, [], [3], [n0.copy(), n1.copy(), n2.copy(), n3.copy()])
+        self.assertFalse(bc._transform_and(2))
+
+    # _transform_or
+
+    def test_transform_or_one_absorbing(self):
+        n0 = node(0, '1', {}, {2: 1})
+        n1 = node(1, 'x', {}, {2: 1})
+        n2 = node(2, '|', {0: 1, 1: 1}, {3: 1})
+        n3 = node(3, '',  {2: 1}, {})
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc, [], [3], [n0.copy(), n1.copy(), n2.copy(), n3.copy()])
+
+        self.assertTrue(bc._transform_or(2))
+        self.assertNotIn(2, bc.get_node_ids())
+        parent_labels = [bc.get_node_by_id(pid).get_label()
+                         for pid in bc.get_node_by_id(3).get_parents()]
+        self.assertIn('1', parent_labels)
+
+    def test_transform_or_zero_neutral(self):
+        n0 = node(0, '0', {}, {2: 1})
+        n1 = node(1, 'x', {}, {2: 1})
+        n2 = node(2, '|', {0: 1, 1: 1}, {3: 1})
+        n3 = node(3, '',  {2: 1}, {})
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc, [], [3], [n0.copy(), n1.copy(), n2.copy(), n3.copy()])
+
+        self.assertTrue(bc._transform_or(2))
+        self.assertNotIn(0, bc.get_node_ids())
+        self.assertIn(2, bc.get_node_ids())
+
+    # _transform_xor
+
+    def test_transform_xor_zero_neutral(self):
+        n0 = node(0, '0', {}, {2: 1})
+        n1 = node(1, 'x', {}, {2: 1})
+        n2 = node(2, '^', {0: 1, 1: 1}, {3: 1})
+        n3 = node(3, '',  {2: 1}, {})
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc, [], [3], [n0.copy(), n1.copy(), n2.copy(), n3.copy()])
+
+        self.assertTrue(bc._transform_xor(2))
+        self.assertNotIn(0, bc.get_node_ids())
+        self.assertIn(2, bc.get_node_ids())
+
+    def test_transform_xor_one_negates(self):
+        n0 = node(0, '1', {}, {2: 1})
+        n1 = node(1, 'x', {}, {2: 1})
+        n2 = node(2, '^', {0: 1, 1: 1}, {3: 1})
+        n3 = node(3, '',  {2: 1}, {})
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc, [], [3], [n0.copy(), n1.copy(), n2.copy(), n3.copy()])
+
+        self.assertTrue(bc._transform_xor(2))
+        self.assertNotIn(0, bc.get_node_ids())
+        self.assertIn(2, bc.get_node_ids())
+        xor_children = bc.get_node_by_id(2).get_children()
+        not_labels = [bc.get_node_by_id(c).get_label() for c in xor_children]
+        self.assertIn('~', not_labels)
+
+    # _transform_neutral
+
+    def test_transform_neutral_and_zero_inputs(self):
+        n0 = node(0, '&', {}, {1: 1})
+        n1 = node(1, '',  {0: 1}, {})
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc, [], [1], [n0.copy(), n1.copy()])
+
+        self.assertTrue(bc._transform_neutral(0))
+        self.assertNotIn(0, bc.get_node_ids())
+        parent_labels = [bc.get_node_by_id(pid).get_label()
+                         for pid in bc.get_node_by_id(1).get_parents()]
+        self.assertIn('1', parent_labels)
+
+    def test_transform_neutral_or_zero_inputs(self):
+        n0 = node(0, '|', {}, {1: 1})
+        n1 = node(1, '',  {0: 1}, {})
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc, [], [1], [n0.copy(), n1.copy()])
+
+        self.assertTrue(bc._transform_neutral(0))
+        parent_labels = [bc.get_node_by_id(pid).get_label()
+                         for pid in bc.get_node_by_id(1).get_parents()]
+        self.assertIn('0', parent_labels)
+
+    def test_transform_neutral_single_input_becomes_wire(self):
+        n0 = node(0, 'x', {}, {1: 1})
+        n1 = node(1, '&', {0: 1}, {2: 1})
+        n2 = node(2, '',  {1: 1}, {})
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc, [], [2], [n0.copy(), n1.copy(), n2.copy()])
+
+        self.assertTrue(bc._transform_neutral(1))
+        self.assertIn(1, bc.get_node_ids())
+        self.assertEqual(bc.get_node_by_id(1).get_label(), '')
+
+    def test_transform_neutral_no_effect_two_inputs(self):
+        n0 = node(0, 'x', {}, {2: 1})
+        n1 = node(1, 'y', {}, {2: 1})
+        n2 = node(2, '&', {0: 1, 1: 1}, {3: 1})
+        n3 = node(3, '',  {2: 1}, {})
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc, [], [3], [n0.copy(), n1.copy(), n2.copy(), n3.copy()])
+        self.assertFalse(bc._transform_neutral(2))
+
+
+# TD11 Exercice 4 : evaluate
+
+class EvaluateTest(unittest.TestCase):
+    """Tests pour bool_circ.evaluate()."""
+
+    def test_evaluate_not(self):
+        circuit, _ = bool_circ.from_string("(~(x))")
+        result = circuit.evaluate([0])
+        self.assertEqual(result, [1])
+
+    def test_evaluate_not_one(self):
+        circuit, _ = bool_circ.from_string("(~(x))")
+        result = circuit.evaluate([1])
+        self.assertEqual(result, [0])
+
+    def test_evaluate_and(self):
+        circuit, _ = bool_circ.from_string("((x0)&(x1))")
+        self.assertEqual(circuit.evaluate([0, 0]), [0])
+        self.assertEqual(circuit.evaluate([0, 1]), [0])
+        self.assertEqual(circuit.evaluate([1, 0]), [0])
+        self.assertEqual(circuit.evaluate([1, 1]), [1])
+
+    def test_evaluate_or(self):
+        circuit, _ = bool_circ.from_string("((x0)|(x1))")
+        self.assertEqual(circuit.evaluate([0, 0]), [0])
+        self.assertEqual(circuit.evaluate([0, 1]), [1])
+        self.assertEqual(circuit.evaluate([1, 0]), [1])
+        self.assertEqual(circuit.evaluate([1, 1]), [1])
+
+    def test_evaluate_xor(self):
+        circuit, _ = bool_circ.from_string("((x0)^(x1))")
+        self.assertEqual(circuit.evaluate([0, 0]), [0])
+        self.assertEqual(circuit.evaluate([0, 1]), [1])
+        self.assertEqual(circuit.evaluate([1, 0]), [1])
+        self.assertEqual(circuit.evaluate([1, 1]), [0])
+
+    def test_evaluate_multi_output(self):
+        circuit, _ = bool_circ.from_string("((x0)&(x1))", "(~(x0))")
+        result = circuit.evaluate([1, 0])
+        self.assertEqual(result, [0, 0])
+        result2 = circuit.evaluate([0, 1])
+        self.assertEqual(result2, [0, 1])
+
+    def test_evaluate_constant_circuit(self):
+        bc = bool_circ.from_integer(0, size=1)
+        result = bc.evaluate([])
+        self.assertEqual(result, [0])
+
+    def test_evaluate_constant_circuit_one(self):
+        bc = bool_circ.from_integer(1, size=1)
+        result = bc.evaluate([])
+        self.assertEqual(result, [1])
+
+
+# TD11 Exercice 5 : évaluation sur entiers encodés
+
+class IntegerEvalTest(unittest.TestCase):
+    """Tests pour l'évaluation du Half_Adder sur des entiers."""
+
+    def _int_to_bits(self, n, size):
+        return [int(b) for b in bin(n)[2:].zfill(size)]
+
+    def test_half_adder0_all_cases(self):
+        ha = bool_circ.Half_Adder(0)
+        for a in range(2):
+            for b in range(2):
+                expected_sum = (a + b) % 2
+                expected_carry = (a + b) // 2
+                result = ha.evaluate([a, b])
+                self.assertEqual(result, [expected_sum, expected_carry],
+                                 msg=f"HA(0)({a},{b}) attendu [{expected_sum},{expected_carry}] obtenu {result}")
+
+    def test_half_adder1_addition(self):
+        ha = bool_circ.Half_Adder(1)
+        test_cases = [(0, 0), (1, 2), (3, 1), (2, 2)]
+        for a, b in test_cases:
+            bits_a = [int(x) for x in bin(a)[2:].zfill(2)[::-1]]
+            bits_b = [int(x) for x in bin(b)[2:].zfill(2)[::-1]]
+            result = ha.evaluate(bits_a + bits_b)
+            r_bits = result[:-1]
+            carry = result[-1]
+            r_val = int(''.join(str(x) for x in r_bits[::-1]), 2)
+            total = r_val + carry * (2 ** len(r_bits))
+            self.assertEqual(total, a + b,
+                             msg=f"HA(1)({a}+{b}): attendu {a+b}, obtenu {total}")
+
+    def test_from_integer_encoding(self):
+        for n in range(8):
+            bc = bool_circ.from_integer(n, size=8)
+            result = bc.evaluate([])
+            expected = self._int_to_bits(n, 8)
+            self.assertEqual(result, expected, msg=f"from_integer({n}) : {result} != {expected}")
+
+    # TD11 Exercice 6 : Évaluation de l'additionneur
+
+    def test_adder0_all_cases(self):
+        adder = bool_circ.Adder(0)
+        for a in range(2):
+            for b in range(2):
+                for cin in range(2):
+                    expected_sum = (a + b + cin) % 2
+                    expected_carry = (a + b + cin) // 2
+                    result = adder.evaluate([a, b, cin])
+                    self.assertEqual(result, [expected_sum, expected_carry],
+                                     msg=f"Adder(0)({a}+{b}+{cin}) attendu [{expected_sum},{expected_carry}] obtenu {result}")
+
+    def test_adder1_addition(self):
+        adder = bool_circ.Adder(1)
+        test_cases = [(0, 0, 0), (1, 2, 0), (3, 1, 1), (2, 2, 1), (3, 3, 1)]
+        for a, b, cin in test_cases:
+            bits_a = [int(x) for x in bin(a)[2:].zfill(2)[::-1]]
+            bits_b = [int(x) for x in bin(b)[2:].zfill(2)[::-1]]
+            
+            result = adder.evaluate(bits_a + bits_b + [cin])
+            
+            r_bits = result[:-1]
+            carry = result[-1]
+            r_val = int(''.join(str(x) for x in r_bits[::-1]), 2)
+            total = r_val + carry * (4) # 2^2 = 4
+            self.assertEqual(total, a + b + cin,
+                             msg=f"Adder(1)({a}+{b}+{cin}): attendu {a+b+cin}, obtenu {total}")
+
+    def test_adder2_addition(self):
+        adder = bool_circ.Adder(2)
+        import random
+        random.seed(42)
+        test_cases = [(0, 0, 0), (15, 15, 1), (15, 0, 1), (7, 8, 0)]
+        for _ in range(10):
+            test_cases.append((random.randint(0, 15), random.randint(0, 15), random.randint(0, 1)))
+            
+        for a, b, cin in test_cases:
+            bits_a = [int(x) for x in bin(a)[2:].zfill(4)[::-1]]
+            bits_b = [int(x) for x in bin(b)[2:].zfill(4)[::-1]]
+            
+            result = adder.evaluate(bits_a + bits_b + [cin])
+            
+            r_bits = result[:-1]
+            carry = result[-1]
+            r_val = int(''.join(str(x) for x in r_bits[::-1]), 2)
+            total = r_val + carry * (16)
+            self.assertEqual(total, a + b + cin,
+                             msg=f"Adder(2)({a}+{b}+{cin}): attendu {a+b+cin}, obtenu {total}")
 
 
 if __name__ == '__main__':

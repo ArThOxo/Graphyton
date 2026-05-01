@@ -323,9 +323,10 @@ class bool_circ(open_digraph):
         val = parent.get_label()
         # Récupérer les enfants de la copie avant suppression
         children = list(n.get_children().items())
-        # Supprimer la copie et la constante parente
+        # Supprimer la copie et la constante parente (si sans autre enfant)
         self.remove_node_by_id(node_id)
-        self.remove_node_by_id(parent_id)
+        if parent_id in self.nodes and self.get_node_by_id(parent_id).outdegree() == 0:
+            self.remove_node_by_id(parent_id)
         # Créer une constante pour chaque ancien enfant
         for child_id, mult in children:
             for _ in range(mult):
@@ -348,9 +349,10 @@ class bool_circ(open_digraph):
         new_val = '1' if parent.get_label() == '0' else '0'
         # Récupérer l'enfant du noeud NON
         children = list(n.get_children().items())
-        # Supprimer le noeud NON et la constante parente
+        # Supprimer le noeud NON et la constante parente (si sans autre enfant)
         self.remove_node_by_id(node_id)
-        self.remove_node_by_id(parent_id)
+        if parent_id in self.nodes and self.get_node_by_id(parent_id).outdegree() == 0:
+            self.remove_node_by_id(parent_id)
         # Créer la constante inversée
         for child_id, mult in children:
             for _ in range(mult):
@@ -390,8 +392,9 @@ class bool_circ(open_digraph):
                     self.add_edge(new_const, child_id)
         else:
             # Élément neutre (1) : retirer juste le 1
-            self.remove_edge(const_parent_id, node_id)
-            self.remove_node_by_id(const_parent_id)
+            self.remove_parallel_edges(const_parent_id, node_id)
+            if self.get_node_by_id(const_parent_id).outdegree() == 0:
+                self.remove_node_by_id(const_parent_id)
         return True
 
     def _transform_or(self, node_id):
@@ -425,8 +428,9 @@ class bool_circ(open_digraph):
                     self.add_edge(new_const, child_id)
         else:
             # Élément neutre (0) : retirer juste le 0
-            self.remove_edge(const_parent_id, node_id)
-            self.remove_node_by_id(const_parent_id)
+            self.remove_parallel_edges(const_parent_id, node_id)
+            if self.get_node_by_id(const_parent_id).outdegree() == 0:
+                self.remove_node_by_id(const_parent_id)
         return True
 
     def _transform_xor(self, node_id):
@@ -445,12 +449,14 @@ class bool_circ(open_digraph):
             return False
         if const_val == '0':
             # Élément neutre : retirer juste le 0
-            self.remove_edge(const_parent_id, node_id)
-            self.remove_node_by_id(const_parent_id)
+            self.remove_parallel_edges(const_parent_id, node_id)
+            if self.get_node_by_id(const_parent_id).outdegree() == 0:
+                self.remove_node_by_id(const_parent_id)
         else:
             # 1 ^ X = ~X : retirer le 1 et ajouter un NON après le XOR
-            self.remove_edge(const_parent_id, node_id)
-            self.remove_node_by_id(const_parent_id)
+            self.remove_parallel_edges(const_parent_id, node_id)
+            if self.get_node_by_id(const_parent_id).outdegree() == 0:
+                self.remove_node_by_id(const_parent_id)
             
             # Insérer un noeud NON entre le XOR et son enfant
             children = list(n.get_children().items())
@@ -491,6 +497,64 @@ class bool_circ(open_digraph):
             return True
         
         return False
+
+# TD11 - Exercice 4 : évaluation d'un circuit booléen
+
+    def evaluate(self, inputs):
+        """
+        Évalue le circuit booléen sur une liste de valeurs d'entrée (0 ou 1).
+
+        """
+        bc = open_digraph.__new__(bool_circ)
+        open_digraph.__init__(bc,
+                              self.inputs.copy(),
+                              self.outputs.copy(),
+                              [n.copy() for n in self.get_nodes()])
+
+        input_ids = bc.get_input_ids()[:]
+        for i, in_id in enumerate(input_ids):
+            val = str(inputs[i])
+            in_node = bc.get_node_by_id(in_id)
+            child_id = list(in_node.get_children().keys())[0]
+            bc.remove_node_by_id(in_id)
+            const_id = bc.add_node(label=val)
+            bc.add_edge(const_id, child_id)
+
+        changed = True
+        while changed:
+            changed = False
+            for node_id in list(bc.get_node_ids()):
+                if node_id not in bc.get_node_ids():
+                    continue
+                if (bc._transform_copy(node_id)
+                        or bc._transform_not(node_id)
+                        or bc._transform_and(node_id)
+                        or bc._transform_or(node_id)
+                        or bc._transform_xor(node_id)
+                        or bc._transform_neutral(node_id)):
+                    changed = True
+
+        result = []
+        for out_id in bc.get_output_ids():
+            out_node = bc.get_node_by_id(out_id)
+            parent_id = list(out_node.get_parents().keys())[0]
+            parent_label = bc.get_node_by_id(parent_id).get_label()
+            result.append(int(parent_label))
+        return result
+
+
+    def evaluate_integer(self, *integers, size=8):
+        """
+        Évalue le circuit booléen en fournissant des entiers encodés en binaire.
+
+        """
+        input_bits = []
+        for n in integers:
+            input_bits += [int(b) for b in bin(n)[2:].zfill(size)]
+
+        output_bits = self.evaluate(input_bits)
+        result = int(''.join(str(b) for b in output_bits), 2) if output_bits else 0
+        return result
 
 #TD10
 

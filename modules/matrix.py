@@ -113,15 +113,6 @@ class OpenDigraphMatrix:
         """
         Crée un graphe 'Identité' de taille n, agissant comme l'élément neutre de la composition séquentielle
 
-        Structure attendue :
-        - Le graphe contient 2n nœuds au total
-        - n nœuds servent d'entrées (indices i_in)
-        - n nœuds servent de sorties (indices i_out)
-        - Pour chaque i allant de 0 à n-1, une arête unique est créée reliant le nœud d'entrée i au nœud de sortie i
-        
-        Propriétés :
-        - Les listes 'inputs' et 'outputs' du graphe ont une longueur de n
-        - Ce graphe ne modifie pas l'information mais se contente de la transmettre d'une couche à l'autre
         """
         g = cls.empty()
         inputs = []

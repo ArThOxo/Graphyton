@@ -1,9 +1,9 @@
 class OpenDigraphAlgoToutGenre:
     def bfs(self, src, direction=None, tgt=None):
         """
-        Calcule les distances depuis un noeud source en utilisant un BFS.
-        Intègre un arrêt anticipé si tgt est atteint (Exercice 3).
-        Renvoie les dictionnaires dist et prev.
+        Calcule les distances depuis un noeud source en utilisant un BFS
+        Intègre un arrêt anticipé si tgt est atteint
+        Renvoie les dictionnaires dist et prev
         """
         dist = {src: 0}
         prev = {}
