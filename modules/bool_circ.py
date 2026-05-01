@@ -47,14 +47,13 @@ class bool_circ(open_digraph):
                     
         return True
 
+
     @classmethod
-    def random_bool_circ(cls, n, bound):
+    def from_dag(cls, g):
         """
-        TD10: Exercice 1
-        Génère un circuit booléen aléatoire valide.
+        TD10: Exercice 1 - Transformateur
+        Transforme un graphe dirigé acyclique en un circuit booléen valide.
         """
-        g = open_digraph.random(n, bound, form="DAG")
-        
         # 1. Supprimer les noeuds isolés
         node_ids = set(g.get_node_ids())
         for node_id in node_ids:
@@ -105,6 +104,15 @@ class bool_circ(open_digraph):
                 g.add_edge(node_id, copy_id)
                 
         return cls(g)
+
+    @classmethod
+    def random_bool_circ(cls, n, bound):
+        """
+        TD10: Exercice 1 - Génération
+        Génère un circuit booléen aléatoire valide.
+        """
+        g = open_digraph.random(n, bound, form="DAG")
+        return cls.from_dag(g)
 
     @classmethod
     def random_bool_circ_with_io(cls, n, bound, nb_inputs, nb_outputs):
