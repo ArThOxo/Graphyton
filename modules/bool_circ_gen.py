@@ -14,7 +14,7 @@ class BoolCircGen:
 
     @staticmethod
     def assigner_es_par_degre(g, node_ids):
-        """Assigne les noeuds sans parents comme entrées et ceux sans enfants comme sorties."""
+        """Assigne les noeuds sans parents comme entrées et ceux sans enfants comme sorties"""
         for node_id in node_ids:
             node = g.get_node_by_id(node_id)
             if node.indegree() == 0:
@@ -24,7 +24,7 @@ class BoolCircGen:
 
     @staticmethod
     def assigner_logique_aux_noeuds(g, node_ids):
-        """Assigne des étiquettes de portes logiques aux noeuds et gère le fan-out (sorties multiples)."""
+        """Assigne des étiquettes de portes logiques aux noeuds et gère les sorties multiples"""
         for node_id in node_ids:
             node = g.get_node_by_id(node_id)
             indeg = node.indegree()
@@ -91,7 +91,7 @@ class BoolCircGen:
         while len(inputs) < nb_inputs:
             g.add_input_node(random.choice(node_ids))
             inputs = g.get_input_ids()  
-            
+
         while len(inputs) > nb_inputs:
             in_to_remove = inputs[-1]
             tgt_to_remove = list(g.get_node_by_id(in_to_remove).get_children().keys())[0]

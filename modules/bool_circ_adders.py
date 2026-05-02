@@ -2,7 +2,7 @@ from modules.open_digraph import open_digraph
 
 class BoolCircAdders:
     @classmethod
-    def _build_adder0(cls):
+    def build_adder0(cls):
         """
         Construit le circuit de base Adder0 (additionneur 1 bit complet).
         Entrées : a, b, carry_in (3 entrées)
@@ -114,7 +114,7 @@ class BoolCircAdders:
         c_in_id = inputs[-1]  # carry_in est toujours la dernière entrée
         # Trouver le noeud interne connecté au carry_in
         c_in_child = list(g.get_node_by_id(c_in_id).get_children().keys())[0]
-        # Supprimer le noeud d'entrée carry_in
+        # Supprimer carry_in
         g.remove_node_by_id(c_in_id)
         # Ajouter une constante 0 à la place
         zero_id = g.add_node(label='0')
