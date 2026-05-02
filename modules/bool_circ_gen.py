@@ -57,7 +57,7 @@ class BoolCircGen:
         TD10: Exercice 1 - Transformateur
         Transforme un graphe dirigé acyclique en un circuit booléen valide.
         """
-        cls._nettoyer_noeuds_isoles(g)
+        cls.nettoyer_noeuds_isoles(g)
         node_ids = g.get_node_ids()
         if not node_ids:
             return cls(g)   

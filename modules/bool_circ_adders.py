@@ -109,7 +109,7 @@ class BoolCircAdders:
         Entrées : a[0..s-1], b[0..s-1]   (total : 2s)
         Sorties : r[0..s-1], carry_out     (total : s + 1)
         """
-        g = cls._build_adder(n)
+        g = cls.build_adder(n)
         inputs = g.get_input_ids()
         c_in_id = inputs[-1]  # carry_in est toujours la dernière entrée
         # Trouver le noeud interne connecté au carry_in
