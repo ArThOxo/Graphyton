@@ -263,27 +263,19 @@ class bool_circ(open_digraph):
         for s in args[1:]:
             arbre_temp = cls.parse_from_string(s)
             arbre_global = arbre_global.comp_parallel(arbre_temp)
-
         variables_vues = {}
         noms_variables = []
-        
         feuilles = [n.get_id() for n in arbre_global.get_nodes() if not n.get_parents()]
-        
         for id_feuille in feuilles:
             noeud = arbre_global.get_node_by_id(id_feuille)
             nom_var = noeud.get_label()
-
             if not nom_var:
                 continue
-            
             if nom_var not in variables_vues:
                 variables_vues[nom_var] = id_feuille
                 noms_variables.append(nom_var)
-                
-                arbre_global.add_input_node(id_feuille)
-                
+                arbre_global.add_input_node(id_feuille)  
                 noeud.set_label("")
-
             else:
                 id_premier = variables_vues[nom_var]
                 arbre_global.merge_nodes(id_premier, id_feuille)
@@ -313,195 +305,171 @@ class bool_circ(open_digraph):
 
         return cls(g)
 
-# TD11 - Exercice 3 : Règles de transformation pour l'évaluation
-
-    def _transform_copy(self, node_id):
-        n = self.get_node_by_id(node_id)
-        if n.get_label() != '':
-            return False
-        if node_id in self.get_input_ids() or node_id in self.get_output_ids():
-            return False
-        parents = n.get_parents()
-        if len(parents) != 1:
-            return False
-        parent_id = list(parents.keys())[0]
-        parent = self.get_node_by_id(parent_id)
-        if parent.get_label() not in ('0', '1'):
-            return False
-        val = parent.get_label()
-        # Récupérer les enfants de la copie avant suppression
-        children = list(n.get_children().items())
-        # Supprimer la copie et la constante parente (si sans autre enfant)
+# TD11 Exercice 3 
+# Méthodes pour les transformations
+    
+    def _get_constant_parents(self, node):
+        """Retourne la liste des parents du noeud qui sont des constantes ('0' ou '1')."""
+        constants = []
+        for pid in node.get_parents():
+            p = self.get_node_by_id(pid)
+            if p.get_label() in ('0', '1') and p.indegree() == 0:
+                constants.append(p)
+        return constants
+        
+    def _replace_node_with_constant(self, node, value):
+        """
+        Remplace un noeud par une constante (value). 
+        Reconnecte tous ses enfants à cette nouvelle constante, 
+        et nettoie les parents qui n'ont plus d'utilité (qui deviennent orphelins).
+        """
+        node_id = node.get_id()
+        children = list(node.get_children().items())
+        parents = list(node.get_parents().keys())
+        
+        # On supprime le noeud
         self.remove_node_by_id(node_id)
-        if parent_id in self.nodes and self.get_node_by_id(parent_id).outdegree() == 0:
-            self.remove_node_by_id(parent_id)
-        # Créer une constante pour chaque ancien enfant
+        
+        # Nettoyage des parents (ex: autres constantes) qui n'ont plus d'enfants suite à la suppression
+        for pid in parents:
+            if pid in self.nodes:
+                p = self.get_node_by_id(pid)
+                if p.get_label() in ('0', '1') and p.indegree() == 0 and p.outdegree() == 0:
+                    self.remove_node_by_id(pid)
+                    
+        # Création des nouvelles constantes pour les enfants
         for child_id, mult in children:
             for _ in range(mult):
-                new_const = self.add_node(label=val)
+                new_const = self.add_node(label=value)
                 self.add_edge(new_const, child_id)  
+                
+    def _remove_constant_parent(self, node, const_parent):
+        """Coupe le lien entre une constante et un noeud. Supprime la constante si elle ne sert plus à rien."""
+        self.remove_parallel_edges(const_parent.get_id(), node.get_id())
+        if const_parent.outdegree() == 0:
+            self.remove_node_by_id(const_parent.get_id())
+
+    def _insert_not_gate_after(self, node):
+        """Insère une porte NON (~) juste après ce noeud, pour tous ses enfants."""
+        node_id = node.get_id()
+        children = list(node.get_children().items())
+        for child_id, mult in children:
+            self.remove_parallel_edges(node_id, child_id)
+            not_id = self.add_node(label='~')
+            self.add_edge(node_id, not_id)
+            for _ in range(mult):
+                self.add_edge(not_id, child_id)
+
+    # Transformation
+
+    def _transform_copy(self, node_id):
+        node = self.get_node_by_id(node_id)
+        
+        # On ne transforme que les copies (label vide) qui ne sont pas des entrées/sorties
+        if node.get_label() != '' or node_id in self.get_input_ids() or node_id in self.get_output_ids():
+            return False
+            
+        const_parents = self._get_constant_parents(node)
+        if not const_parents or len(node.get_parents()) != 1:
+            return False
+            
+        # Si la copie reçoit une constante, on propage cette constante aux enfants
+        const_value = const_parents[0].get_label()
+        self._replace_node_with_constant(node, const_value)
         return True
 
     def _transform_not(self, node_id):
-        n = self.get_node_by_id(node_id)
-        if n.get_label() != '~':
+        node = self.get_node_by_id(node_id)
+        if node.get_label() != '~':
             return False
-        parents = n.get_parents()
-        if len(parents) != 1:
+            
+        const_parents = self._get_constant_parents(node)
+        if not const_parents or len(node.get_parents()) != 1:
             return False 
-        parent_id = list(parents.keys())[0]
-        parent = self.get_node_by_id(parent_id)
-        if parent.get_label() not in ('0', '1'):
-            return False
-        # Calculer la valeur inversée
-        new_val = '1' if parent.get_label() == '0' else '0'
-        # Récupérer l'enfant du noeud NON
-        children = list(n.get_children().items())
-        # Supprimer le noeud NON et la constante parente (si sans autre enfant)
-        self.remove_node_by_id(node_id)
-        if parent_id in self.nodes and self.get_node_by_id(parent_id).outdegree() == 0:
-            self.remove_node_by_id(parent_id)
-        # Créer la constante inversée
-        for child_id, mult in children:
-            for _ in range(mult):
-                new_const = self.add_node(label=new_val)
-                self.add_edge(new_const, child_id)
+            
+        # Si NON reçoit une constante, on la remplace par la constante inverse
+        const_value = const_parents[0].get_label()
+        inverse_value = '1' if const_value == '0' else '0'
+        
+        self._replace_node_with_constant(node, inverse_value)
         return True
 
     def _transform_and(self, node_id):
-        n = self.get_node_by_id(node_id)
-        if n.get_label() != '&':
+        node = self.get_node_by_id(node_id)
+        if node.get_label() != '&':
             return False
-        # Chercher un parent constant
-        const_parent_id = None
-        const_val = None
-        for pid in n.get_parents():
-            p = self.get_node_by_id(pid)
-            if p.get_label() in ('0', '1') and p.indegree() == 0:
-                const_parent_id = pid
-                const_val = p.get_label()
-                break
-        if const_parent_id is None:
+            
+        const_parents = self._get_constant_parents(node)
+        if not const_parents:
             return False
-        if const_val == '0':
-            # Élément absorbant : résultat = 0
-            children = list(n.get_children().items())
-            # Collecter tous les parents à supprimer
-            all_parents = list(n.get_parents().keys())
-            self.remove_node_by_id(node_id)
-            for pid in all_parents:
-                if pid in self.nodes:
-                    p = self.get_node_by_id(pid)
-                    if p.get_label() in ('0', '1') and p.indegree() == 0 and p.outdegree() == 0:
-                        self.remove_node_by_id(pid)
-            for child_id, mult in children:
-                for _ in range(mult):
-                    new_const = self.add_node(label='0')
-                    self.add_edge(new_const, child_id)
+            
+        const_parent = const_parents[0]
+        
+        if const_parent.get_label() == '0':
+            # 0 est absorbant pour le ET : tout le noeud devient 0
+            self._replace_node_with_constant(node, '0')
         else:
-            # Élément neutre (1) : retirer juste le 1
-            self.remove_parallel_edges(const_parent_id, node_id)
-            if self.get_node_by_id(const_parent_id).outdegree() == 0:
-                self.remove_node_by_id(const_parent_id)
+            # 1 est neutre pour le ET : on ignore juste cette entrée
+            self._remove_constant_parent(node, const_parent)
         return True
 
     def _transform_or(self, node_id):
-        n = self.get_node_by_id(node_id)
-        if n.get_label() != '|':
+        node = self.get_node_by_id(node_id)
+        if node.get_label() != '|':
             return False
-        const_parent_id = None
-        const_val = None
-        for pid in n.get_parents():
-            p = self.get_node_by_id(pid)
-            if p.get_label() in ('0', '1') and p.indegree() == 0:
-                const_parent_id = pid
-                const_val = p.get_label()
-                break
-        if const_parent_id is None:
-            return False
-        if const_val == '1':
-            # Élément absorbant : résultat = 1
-            children = list(n.get_children().items())
-            all_parents = list(n.get_parents().keys())
-            self.remove_node_by_id(node_id)
-            for pid in all_parents:
-                if pid in self.nodes:
-                    p = self.get_node_by_id(pid)
-                    if p.get_label() in ('0', '1') and p.indegree() == 0 and p.outdegree() == 0:
-                        self.remove_node_by_id(pid)
             
-            for child_id, mult in children:
-                for _ in range(mult):
-                    new_const = self.add_node(label='1')
-                    self.add_edge(new_const, child_id)
+        const_parents = self._get_constant_parents(node)
+        if not const_parents:
+            return False
+            
+        const_parent = const_parents[0]
+        
+        if const_parent.get_label() == '1':
+            # 1 est absorbant pour le OU : tout le noeud devient 1
+            self._replace_node_with_constant(node, '1')
         else:
-            # Élément neutre (0) : retirer juste le 0
-            self.remove_parallel_edges(const_parent_id, node_id)
-            if self.get_node_by_id(const_parent_id).outdegree() == 0:
-                self.remove_node_by_id(const_parent_id)
+            # 0 est neutre pour le OU : on ignore juste cette entrée
+            self._remove_constant_parent(node, const_parent)
         return True
 
     def _transform_xor(self, node_id):
-        n = self.get_node_by_id(node_id)
-        if n.get_label() != '^':
+        node = self.get_node_by_id(node_id)
+        if node.get_label() != '^':
             return False
-        const_parent_id = None
-        const_val = None
-        for pid in n.get_parents():
-            p = self.get_node_by_id(pid)
-            if p.get_label() in ('0', '1') and p.indegree() == 0:
-                const_parent_id = pid
-                const_val = p.get_label()
-                break
-        if const_parent_id is None:
-            return False
-        if const_val == '0':
-            # Élément neutre : retirer juste le 0
-            self.remove_parallel_edges(const_parent_id, node_id)
-            if self.get_node_by_id(const_parent_id).outdegree() == 0:
-                self.remove_node_by_id(const_parent_id)
-        else:
-            # 1 ^ X = ~X : retirer le 1 et ajouter un NON après le XOR
-            self.remove_parallel_edges(const_parent_id, node_id)
-            if self.get_node_by_id(const_parent_id).outdegree() == 0:
-                self.remove_node_by_id(const_parent_id)
             
-            # Insérer un noeud NON entre le XOR et son enfant
-            children = list(n.get_children().items())
-            for child_id, mult in children:
-                self.remove_parallel_edges(node_id, child_id)
-                not_id = self.add_node(label='~')
-                self.add_edge(node_id, not_id)
-                for _ in range(mult):
-                    self.add_edge(not_id, child_id)   
+        const_parents = self._get_constant_parents(node)
+        if not const_parents:
+            return False
+            
+        const_parent = const_parents[0]
+        
+        if const_parent.get_label() == '0':
+            # 0 est neutre pour le XOR : on ignore juste cette entrée
+            self._remove_constant_parent(node, const_parent)
+        else:
+            # 1 inverse l'autre entrée (1 ^ X = ~X)
+            self._remove_constant_parent(node, const_parent)
+            self._insert_not_gate_after(node)
         return True
 
     def _transform_neutral(self, node_id):
-        n = self.get_node_by_id(node_id)
-        label = n.get_label()
+        node = self.get_node_by_id(node_id)
+        label = node.get_label()
+        
         if label not in ('&', '|', '^'):
             return False
-        indeg = n.indegree()
+            
+        indeg = node.indegree()
+        
         if indeg == 0:
-            # Porte sans entrée → constante
-            if label == '&':
-                const_val = '1'
-            else:
-                const_val = '0'
-            
-            children = list(n.get_children().items())
-            self.remove_node_by_id(node_id)
-            
-            for child_id, mult in children:
-                for _ in range(mult):
-                    new_const = self.add_node(label=const_val)
-                    self.add_edge(new_const, child_id)
-            
+            # S'il ne reste plus aucune entrée, on remplace la porte par l'élément neutre de son opération
+            neutre = '1' if label == '&' else '0'
+            self._replace_node_with_constant(node, neutre)
             return True
         
         elif indeg == 1:
-            # Une seule entrée → fil (le noeud devient une copie '')
-            n.set_label('')
+            # S'il ne reste plus qu'une seule entrée, la porte devient transparente (un simple fil)
+            node.set_label('')
             return True
         
         return False
