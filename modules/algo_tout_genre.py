@@ -7,19 +7,13 @@ class OpenDigraphAlgoToutGenre:
         """
         dist = {src: 0}
         prev = {}
-        
-        # On utilise une liste comme file FIFO
         file = [src]
-        
         while file:
             u = file.pop(0)
             if tgt is not None and u == tgt:
                 break
-
             noeud_u = self.get_node_by_id(u)
             voisins = []
-            
-            # Choix voisins selon la direction
             if direction == 1:
                 # Enfants
                 voisins = list(noeud_u.get_children().keys())
@@ -29,7 +23,6 @@ class OpenDigraphAlgoToutGenre:
             else:
                 # Les deux
                 voisins = list(noeud_u.get_children().keys()) + list(noeud_u.get_parents().keys())
-                
             # Parcours des voisins
             for v in voisins:
                 if v not in dist:
@@ -44,22 +37,14 @@ class OpenDigraphAlgoToutGenre:
         Calcule et renvoie la liste des noeuds formant 
         le plus court chemin orienté de u vers v
         """
-        # On lance le BFS avec direction=1 (car on cherche un chemin orienté) 
-        # et tgt=v pour l'arrêt anticipé.
         dist, prev = self.bfs(src=u, direction=1, tgt=v)
-        
-        # Si v n'est pas dans dist, c'est qu'il est inatteignable depuis u
         if v not in dist:
             return []
-            
-        # Reconstruction du chemin en remontant le dictionnaire prev à l'envers
         path = [v]
         current = v
         while current in prev:
             current = prev[current]
             path.append(current)
-            
-        # On remet le chemin dans le bon sens (de u vers v)
         path.reverse()
         return path
 

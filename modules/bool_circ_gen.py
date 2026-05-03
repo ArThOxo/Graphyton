@@ -5,7 +5,7 @@ class BoolCircGen:
     # Méthodes utilisé
     
     @staticmethod
-    def nettoyer_noeuds_isoles(g):
+    def supprime_noeuds_isoles(g):
         """Supprime tous les noeuds sans parents et sans enfants du graphe."""
         for node_id in list(g.get_node_ids()):
             node = g.get_node_by_id(node_id)
@@ -57,7 +57,7 @@ class BoolCircGen:
         TD10: Exercice 1 - Transformateur
         Transforme un graphe dirigé acyclique en un circuit booléen valide.
         """
-        cls.nettoyer_noeuds_isoles(g)
+        cls.supprime_noeuds_isoles(g)
         node_ids = g.get_node_ids()
         if not node_ids:
             return cls(g)   
@@ -82,7 +82,7 @@ class BoolCircGen:
         """
         while True:
             g = open_digraph.random(n, bound, form="DAG")
-            cls.nettoyer_noeuds_isoles(g)
+            cls.supprime_noeuds_isoles(g)
             node_ids = g.get_node_ids()
             if node_ids:
                 break
