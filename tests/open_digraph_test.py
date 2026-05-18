@@ -647,6 +647,96 @@ class TransformTest(unittest.TestCase):
         open_digraph.__init__(bc, [], [3], [n0.copy(), n1.copy(), n2.copy(), n3.copy()])
         self.assertFalse(bc._transform_neutral(2))
 
+    # Tests TD12 Exercice 2
+
+    def test_transform_assoc_xor(self):
+        n0 = node(0, '', {}, {1: 1})
+        n1 = node(1, '^', {0: 1}, {2: 1})
+        n2 = node(2, '^', {1: 1}, {3: 1})
+        n3 = node(3, '', {2: 1}, {})
+        g = open_digraph([0], [3], [n0, n1, n2, n3])
+        bc = bool_circ.__new__(bool_circ)
+        open_digraph.__init__(bc, g.get_input_ids(), g.get_output_ids(), [n.copy() for n in g.get_nodes()])
+        self.assertTrue(bc._transform_assoc_xor(2))
+        self.assertNotIn(1, bc.get_node_ids())
+        self.assertIn(0, bc.get_node_by_id(2).get_parents())
+
+    def test_transform_assoc_copy(self):
+        n0 = node(0, '', {}, {1: 1})
+        n1 = node(1, '', {0: 1}, {2: 1})
+        n2 = node(2, '', {1: 1}, {3: 1, 4: 1})
+        n3 = node(3, '', {2: 1}, {})
+        n4 = node(4, '', {2: 1}, {})
+        g = open_digraph([0], [3, 4], [n0, n1, n2, n3, n4])
+        bc = bool_circ.__new__(bool_circ)
+        open_digraph.__init__(bc, g.get_input_ids(), g.get_output_ids(), [n.copy() for n in g.get_nodes()])
+        self.assertTrue(bc._transform_assoc_copy(2))
+        self.assertNotIn(2, bc.get_node_ids())
+        self.assertIn(3, bc.get_node_by_id(1).get_children())
+        self.assertIn(4, bc.get_node_by_id(1).get_children())
+
+    def test_transform_inv_xor(self):
+        n0 = node(0, '', {}, {1: 2})
+        n1 = node(1, '^', {0: 2}, {2: 1})
+        n2 = node(2, '', {1: 1}, {})
+        g = open_digraph([0], [2], [n0, n1, n2])
+        bc = bool_circ.__new__(bool_circ)
+        open_digraph.__init__(bc, g.get_input_ids(), g.get_output_ids(), [n.copy() for n in g.get_nodes()])
+        self.assertTrue(bc._transform_inv_xor(1))
+        self.assertNotIn(0, bc.get_node_by_id(1).get_parents())
+
+    def test_transform_erasure(self):
+        n0 = node(0, '', {}, {1: 1})
+        n1 = node(1, '^', {0: 1}, {})
+        g = open_digraph([0], [], [n0, n1])
+        bc = bool_circ.__new__(bool_circ)
+        open_digraph.__init__(bc, g.get_input_ids(), g.get_output_ids(), [n.copy() for n in g.get_nodes()])
+        self.assertTrue(bc._transform_erasure(1))
+        self.assertNotIn(1, bc.get_node_ids())
+
+    def test_transform_not_through_xor(self):
+        n0 = node(0, '', {}, {1: 1})
+        n1 = node(1, '~', {0: 1}, {2: 1})
+        n2 = node(2, '^', {1: 1}, {3: 1})
+        n3 = node(3, '', {2: 1}, {})
+        g = open_digraph([0], [3], [n0, n1, n2, n3])
+        bc = bool_circ.__new__(bool_circ)
+        open_digraph.__init__(bc, g.get_input_ids(), g.get_output_ids(), [n.copy() for n in g.get_nodes()])
+        self.assertTrue(bc._transform_not_through_xor(2))
+        self.assertNotIn(1, bc.get_node_ids())
+        children = bc.get_node_by_id(2).get_children()
+        not_node_id = list(children.keys())[0]
+        self.assertEqual(bc.get_node_by_id(not_node_id).get_label(), '~')
+
+    def test_transform_not_through_copy(self):
+        n0 = node(0, '', {}, {1: 1})
+        n1 = node(1, '~', {0: 1}, {2: 1})
+        n2 = node(2, '', {1: 1}, {3: 1, 4: 1})
+        n3 = node(3, '', {2: 1}, {})
+        n4 = node(4, '', {2: 1}, {})
+        g = open_digraph([0], [3, 4], [n0, n1, n2, n3, n4])
+        bc = bool_circ.__new__(bool_circ)
+        open_digraph.__init__(bc, g.get_input_ids(), g.get_output_ids(), [n.copy() for n in g.get_nodes()])
+        self.assertTrue(bc._transform_not_through_copy(2))
+        self.assertNotIn(1, bc.get_node_ids())
+        children = bc.get_node_by_id(2).get_children()
+        for child_id in children:
+            self.assertEqual(bc.get_node_by_id(child_id).get_label(), '~')
+
+    def test_transform_inv_not(self):
+        n0 = node(0, '', {}, {1: 1})
+        n1 = node(1, '~', {0: 1}, {2: 1})
+        n2 = node(2, '~', {1: 1}, {3: 1})
+        n3 = node(3, '', {2: 1}, {})
+        g = open_digraph([0], [3], [n0, n1, n2, n3])
+        bc = bool_circ.__new__(bool_circ)
+        open_digraph.__init__(bc, g.get_input_ids(), g.get_output_ids(), [n.copy() for n in g.get_nodes()])
+        self.assertTrue(bc._transform_inv_not(2))
+        self.assertNotIn(1, bc.get_node_ids())
+        self.assertNotIn(2, bc.get_node_ids())
+        self.assertIn(3, bc.get_node_by_id(0).get_children())
+
+
 
 # TD11 Exercice 4 : evaluate
 
@@ -791,6 +881,76 @@ class IntegerEvalTest(unittest.TestCase):
             self.assertEqual(total, a + b + cin,
                              msg=f"Adder(2)({a}+{b}+{cin}): attendu {a+b+cin}, obtenu {total}")
 
+class HammingTest(unittest.TestCase):
+    
+    def test_hamming_encoder(self):
+        enc = bool_circ.hamming_encoder()
+        self.assertIsInstance(enc, bool_circ)
+        self.assertTrue(enc.is_well_formed())
+        self.assertEqual(len(enc.get_input_ids()), 4)
+        self.assertEqual(len(enc.get_output_ids()), 7)
+        
+    def test_hamming_decoder(self):
+        dec = bool_circ.hamming_decoder()
+        self.assertIsInstance(dec, bool_circ)
+        self.assertTrue(dec.is_well_formed())
+        self.assertEqual(len(dec.get_input_ids()), 7)
+        self.assertEqual(len(dec.get_output_ids()), 4)
+
+    def create_error_circuit(self, n, error_positions):
+        g = open_digraph.empty()
+        for i in range(n):
+            cx = g.add_node(label='')
+            g.add_input_node(cx)
+            if i in error_positions:
+                not_id = g.add_node(label='~')
+                g.add_edge(cx, not_id)
+                g.add_output_node(not_id)
+            else:
+                g.add_output_node(cx)
+        return bool_circ(g)
+
+    def downcast(self, bc):
+        g = open_digraph.__new__(open_digraph)
+        open_digraph.__init__(g, bc.get_input_ids(), bc.get_output_ids(), [n.copy() for n in bc.get_nodes()])
+        return g
+
+    def test_hamming_no_error(self):
+        enc = self.downcast(bool_circ.hamming_encoder())
+        dec = self.downcast(bool_circ.hamming_decoder())
+        comp = enc.comp_sequentielle(dec)
+        bc = bool_circ.__new__(bool_circ)
+        open_digraph.__init__(bc, comp.get_input_ids(), comp.get_output_ids(), [n.copy() for n in comp.get_nodes()])
+        bc.evaluate_rewriting()
+        
+        labels = [n.get_label() for n in bc.get_nodes() if n.get_id() not in bc.get_input_ids() and n.get_id() not in bc.get_output_ids()]
+        self.assertTrue(all(label == '' for label in labels), "Le circuit ne s'est pas réduit à l'identité")
+
+    def test_hamming_one_error(self):
+        for i in range(7):
+            enc = self.downcast(bool_circ.hamming_encoder())
+            dec = self.downcast(bool_circ.hamming_decoder())
+            err_circ = self.downcast(self.create_error_circuit(7, [i]))
+            comp = enc.comp_sequentielle(err_circ).comp_sequentielle(dec)
+            bc = bool_circ.__new__(bool_circ)
+            open_digraph.__init__(bc, comp.get_input_ids(), comp.get_output_ids(), [n.copy() for n in comp.get_nodes()])
+            bc.evaluate_rewriting()
+            
+            labels = [n.get_label() for n in bc.get_nodes() if n.get_id() not in bc.get_input_ids() and n.get_id() not in bc.get_output_ids()]
+            self.assertTrue(all(label == '' for label in labels), f"Échec de la correction pour l'erreur sur le bit {i}")
+
+    def test_hamming_two_errors(self):
+        enc = self.downcast(bool_circ.hamming_encoder())
+        dec = self.downcast(bool_circ.hamming_decoder())
+        err_circ = self.downcast(self.create_error_circuit(7, [0, 1]))
+        comp = enc.comp_sequentielle(err_circ).comp_sequentielle(dec)
+        bc = bool_circ.__new__(bool_circ)
+        open_digraph.__init__(bc, comp.get_input_ids(), comp.get_output_ids(), [n.copy() for n in comp.get_nodes()])
+        bc.evaluate_rewriting()
+        
+        labels = [n.get_label() for n in bc.get_nodes() if n.get_id() not in bc.get_input_ids() and n.get_id() not in bc.get_output_ids()]
+        has_logic = any(label != '' for label in labels)
+        self.assertTrue(has_logic, "Le circuit avec 2 erreurs s'est incorrectement réduit à l'identité")
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

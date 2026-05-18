@@ -149,7 +149,147 @@ class BoolCircEval:
         
         return False
 
-    # TD11 - Exercice 4 : évaluation d'un circuit booléen
+    def _transform_assoc_xor(self, node_id):
+        node = self.get_node_by_id(node_id)
+        if node.get_label() != '^':
+            return False
+        for parent_id in list(node.get_parents().keys()):
+            parent_node = self.get_node_by_id(parent_id)
+            if parent_node.get_label() == '^':
+                for grand_parent_id, mult in list(parent_node.get_parents().items()):
+                    for _ in range(mult):
+                        self.add_edge(grand_parent_id, node_id)
+                self.remove_node_by_id(parent_id)
+                return True
+        return False
+
+    def _transform_assoc_copy(self, node_id):
+        node = self.get_node_by_id(node_id)
+        if node.get_label() != '' or node_id in self.get_input_ids() or node_id in self.get_output_ids():
+            return False
+        if len(node.get_parents()) != 1:
+            return False
+        parent_id = list(node.get_parents().keys())[0]
+        parent_node = self.get_node_by_id(parent_id)
+        if parent_node.get_label() != '' or parent_id in self.get_input_ids() or parent_id in self.get_output_ids():
+            return False
+        for child_id, mult in list(node.get_children().items()):
+            self.remove_parallel_edges(node_id, child_id)
+            for _ in range(mult):
+                self.add_edge(parent_id, child_id)
+        self.remove_node_by_id(node_id)
+        return True
+
+    def _transform_inv_xor(self, node_id):
+        node = self.get_node_by_id(node_id)
+        if node.get_label() != '^':
+            return False
+        changed = False
+        for parent_id, mult in list(node.get_parents().items()):
+            if mult > 1:
+                self.remove_parallel_edges(parent_id, node_id)
+                if mult % 2 != 0:
+                    self.add_edge(parent_id, node_id)
+                changed = True
+        return changed
+
+    def _transform_erasure(self, node_id):
+        node = self.get_node_by_id(node_id)
+        if node.outdegree() == 0 and node_id not in self.get_output_ids():
+            self.remove_node_by_id(node_id)
+            return True
+        return False
+
+    def _transform_not_through_xor(self, node_id):
+        node = self.get_node_by_id(node_id)
+        if node.get_label() != '^':
+            return False
+        for parent_id in list(node.get_parents().keys()):
+            parent_node = self.get_node_by_id(parent_id)
+            if parent_node.get_label() == '~':
+                grand_parent_id = list(parent_node.get_parents().keys())[0]
+                self.remove_node_by_id(parent_id)
+                self.add_edge(grand_parent_id, node_id)
+                self._insert_not_gate_after(node)
+                return True
+        return False
+
+    def _transform_not_through_copy(self, node_id):
+        node = self.get_node_by_id(node_id)
+        if node.get_label() != '' or node_id in self.get_input_ids() or node_id in self.get_output_ids():
+            return False
+        if len(node.get_parents()) != 1:
+            return False
+        parent_id = list(node.get_parents().keys())[0]
+        parent_node = self.get_node_by_id(parent_id)
+        if parent_node.get_label() == '~':
+            grand_parent_id = list(parent_node.get_parents().keys())[0]
+            self.remove_node_by_id(parent_id)
+            self.add_edge(grand_parent_id, node_id)
+            self._insert_not_gate_after(node)
+            return True
+        return False
+
+    def _transform_inv_not(self, node_id):
+        node = self.get_node_by_id(node_id)
+        if node.get_label() != '~':
+            return False
+        if len(node.get_parents()) != 1:
+            return False
+        parent_id = list(node.get_parents().keys())[0]
+        parent_node = self.get_node_by_id(parent_id)
+        if parent_node.get_label() == '~':
+            if len(parent_node.get_parents()) != 1:
+                return False
+            grand_parent_id = list(parent_node.get_parents().keys())[0]
+            if len(node.get_children()) != 1:
+                return False
+            child_id = list(node.get_children().keys())[0]
+            self.remove_node_by_id(parent_id)
+            self.remove_node_by_id(node_id)
+            self.add_edge(grand_parent_id, child_id)
+            return True
+        return False
+
+    def _transform_useless_copy(self, node_id):
+        node = self.get_node_by_id(node_id)
+        if node.get_label() != '' or node_id in self.get_input_ids() or node_id in self.get_output_ids():
+            return False
+        if len(node.get_parents()) == 1 and node.outdegree() == 1:
+            parent_id = list(node.get_parents().keys())[0]
+            child_id = list(node.get_children().keys())[0]
+            self.remove_node_by_id(node_id)
+            self.add_edge(parent_id, child_id)
+            return True
+        return False
+
+    def evaluate_rewriting(self):
+        """
+        Applique toutes les règles de réécriture algébrique et d'évaluation tant qu'au moins une s'applique sur le graphe.
+        """
+        changed = True
+        while changed:
+            changed = False
+            for node_id in list(self.get_node_ids()):
+                if node_id not in self.nodes:
+                    continue
+                if (self._transform_copy(node_id)
+                        or self._transform_not(node_id)
+                        or self._transform_and(node_id)
+                        or self._transform_or(node_id)
+                        or self._transform_xor(node_id)
+                        or self._transform_neutral(node_id)
+                        or self._transform_assoc_xor(node_id)
+                        or self._transform_assoc_copy(node_id)
+                        or self._transform_useless_copy(node_id)
+                        or self._transform_inv_xor(node_id)
+                        or self._transform_erasure(node_id)
+                        or self._transform_not_through_xor(node_id)
+                        or self._transform_not_through_copy(node_id)
+                        or self._transform_inv_not(node_id)):
+                    changed = True
+
+
 
     def evaluate(self, inputs):
         """
