@@ -1,4 +1,4 @@
-# ⚡ Graphython — Open Digraphs & Boolean Circuit Compiler
+# Graphython — Open Digraphs & Boolean Circuit Compiler
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=ArThOxo/Graphyton)
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
