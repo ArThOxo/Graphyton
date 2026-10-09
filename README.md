@@ -1,31 +1,30 @@
 # ⚡ Graphython — Open Digraphs & Boolean Circuit Compiler
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=YOUR_USERNAME/graphython)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=ArThOxo/Graphyton)
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 > **Moteur de modélisation, manipulation et évaluation de graphes orientés ouverts (Open Digraphs) et circuits logiques booléens en pur Python, accompagné d'une interface web interactive.**
 
 ---
 
-## 🎯 Aperçu du Projet
+## Aperçu du Projet
 
-Développé dans le cadre du cursus informatique à l'**Université Paris-Saclay**, **Graphython** implémente une structure de données rigoureuse pour les graphes orientés ouverts (*open directed graphs* avec entrées/sorties distinctes) et les applique à la compilation et simulation de circuits logiques :
+**Graphython** implémente une structure de données rigoureuse pour les graphes orientés ouverts (*open directed graphs* avec entrées/sorties distinctes) et les applique à la compilation et simulation de circuits logiques :
 
-- 📐 **Théorie des Graphes :** Graphes orientés ouverts, détection de cycles, tri topologique, composantes connexes, matrices d'adjacence, composition séquentielle & parallèle.
-- 🔣 **Circuits Booléens :** Portes logiques (`AND`, `OR`, `XOR`, `NOT`, `NAND`, `NOR`, `XNOR`), copie/effacement d'arêtes.
-- 🧮 **Arithmétique Binaire :** Génération automatique d'additionneurs demi-additionneur (*Half-Adder*), additionneur complet (*Full-Adder*) et additionneurs à propagation de retenue $N$-bits (*Ripple-Carry Adders*).
-- 🧩 **Compilateur d'Expressions :** Parseur syntaxique transformant des expressions booléennes complexes (ex: `((x0 & x1) | ~x2) ^ x3`) en graphes acycliques de portes logiques avec évaluation dynamique.
-- 💻 **Démonstrateur Web Interactif :** Visualisation dynamique des graphes via Graphviz (DOT), simulation en temps réel des valeurs d'entrée/sortie, et explorateur de code source intégré.
+- **Théorie des Graphes :** Graphes orientés ouverts, détection de cycles, tri topologique, composantes connexes, matrices d'adjacence, composition séquentielle & parallèle.
+- **Circuits Booléens :** Portes logiques (`AND`, `OR`, `XOR`, `NOT`, `NAND`, `NOR`, `XNOR`), copie/effacement d'arêtes.
+- **Arithmétique Binaire :** Génération automatique d'additionneurs demi-additionneur (*Half-Adder*), additionneur complet (*Full-Adder*) et additionneurs à propagation de retenue $N$-bits (*Ripple-Carry Adders*).
+- **Compilateur d'Expressions :** Parseur syntaxique transformant des expressions booléennes complexes (ex: `((x0 & x1) | ~x2) ^ x3`) en graphes acycliques de portes logiques avec évaluation dynamique.
+- **Démonstrateur Web Interactif :** Visualisation dynamique des graphes via Graphviz (DOT), simulation en temps réel des valeurs d'entrée/sortie, et explorateur de code source intégré.
 
 ---
 
-## 🚀 Tester en 1 clic (Sans rien installer)
+## Tester en 1 clic (Sans rien installer)
 
 ### Option 1 : GitHub Codespaces (Recommandé)
 Cliquez sur le bouton ci-dessous pour lancer l'environnement de démo complet directement dans votre navigateur :
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=YOUR_USERNAME/graphython)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=ArThOxo/Graphyton)
 
 *(Le serveur se lance automatiquement sur le port 8080 et ouvre directement la démo interactive !)*
 
@@ -37,7 +36,7 @@ Le projet n'a **aucune dépendance tierce obligatoire** (utilise la bibliothèqu
 
 ```bash
 # 1. Cloner le dépôt
-git clone https://github.com/YOUR_USERNAME/graphython.git
+git clone https://github.com/ArThOxo/Graphyton.git
 cd graphython
 
 # 2. Lancer la démo interactive
@@ -47,7 +46,7 @@ Ouvrez ensuite [http://localhost:8080](http://localhost:8080) dans votre navigat
 
 ---
 
-## 📂 Architecture Modulaire
+## Architecture Modulaire
 
 ```text
 graphython/
@@ -68,15 +67,11 @@ graphython/
 
 ---
 
-## 🔬 Fonctionnalités Clés de la Démo
+## Fonctionnalités Clés de la Démo
 
 1. **Portes & Circuits de base :** Sélection et évaluation visuelle de toutes les portes booléennes élémentaires.
-2. **Additionneurs N-bits paramétrables :** Choisissez le nombre de bits (2 à 5 bits), saisissez les entiers $A$ et $B$, et observez la propagation de retenue et le résultat binaire/décimal calculé par le graphe.
+2. **Additionneurs N-bits paramétrables :** Choisissez le nombre de bits (1 à 8 bits), saisissez les entiers $A$ et $B$, et observez la propagation de retenue et le résultat binaire/décimal calculé par le graphe.
 3. **Parseur d'Expressions Logiques :** Tapez n'importe quelle formule logique (opérateurs `&`, `|`, `^`, `~`) pour générer instantanément le graphe associé et évaluer les tables de vérité.
-4. **Explorateur de Code Source :** Visualiseur avec coloration syntaxique des modules Python du projet.
+4. **Explorateur de Code Source :** Visualiseur des modules Python du projet.
 
 ---
-
-## 👨‍💻 Auteur
-
-* **William Aimé** — Étudiant en Informatique / Mathématiques — Université Paris-Saclay
