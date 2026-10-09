@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graphython | Démonstration Interactive</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Viz.js for rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+    
+    <!-- Highlight.js for code syntax -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                </div>
+                <h1>Graphython</h1>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-target="parse">
+                    <span class="nav-icon">{}</span>
+                    Parseur Logique
+                </a>
+                <a href="#" class="nav-item" data-target="adder">
+                    <span class="nav-icon">⚡</span>
+                    Additionneur (Hardware)
+                </a>
+                <a href="#" class="nav-item" data-target="random">
+                    <span class="nav-icon">🎲</span>
+                    Génération Chaotique
+                </a>
+                <a href="#" class="nav-item" data-target="code">
+                    <span class="nav-icon">📄</span>
+                    Code Source Python
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <p>Propulsé par <strong>Graphython Core</strong></p>
+                <div class="status-indicator">
+                    <span class="dot pulse"></span>
+                    Serveur Connecté
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <h2 id="section-title">Parseur d'Expressions Logiques</h2>
+                <p id="section-desc">Transformez vos chaînes de caractères en DAG (Directed Acyclic Graph) en temps réel.</p>
+            </header>
+
+            <!-- Dynamic Panels -->
+            <div class="content-wrapper">
+                
+                <!-- Left Panel : Controls & Results -->
+                <div class="control-panel glass-panel">
+                    
+                    <!-- PARSE VIEW -->
+                    <div id="view-parse" class="view-section active">
+                        <div class="input-group">
+                            <label>Exemples Rapides</label>
+                            <select class="code-input" onchange="app.setFormulaExample(this.value)">
+                                <option value="((x0)&(~(x1)))">ET exclusif simple</option>
+                                <option value="~((x0)&(x1))">Porte NAND (Non-ET)</option>
+                                <option value="(((x0)&(~(x1)))|((~(x0))&(x1)))">XOR complet</option>
+                                <option value="(((x0)|(x1))&((x2)^(x3)))">Expression complexe (4 var)</option>
+                            </select>
+                        </div>
+                        <div class="input-group mt-3">
+                            <label for="formule-input">Formule Booléenne</label>
+                            <input type="text" id="formule-input" value="((x0)&(~(x1)))" class="code-input">
+                            <div class="quick-inserts mt-2">
+                                <button class="btn-tiny" onclick="app.insertSymbol('&')">ET (&)</button>
+                                <button class="btn-tiny" onclick="app.insertSymbol('|')">OU (|)</button>
+                                <button class="btn-tiny" onclick="app.insertSymbol('~')">NON (~)</button>
+                                <button class="btn-tiny" onclick="app.insertSymbol('^')">XOR (^)</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary mt-3" onclick="app.runParse()">Générer le Circuit</button>
+                        
+                        <div class="results-container mt-4" id="parse-results" style="display: none;">
+                            <h3>Table de Vérité</h3>
+                            <div class="table-wrapper">
+                                <table id="truth-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Entrées</th>
+                                            <th>Sortie</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ADDER VIEW -->
+                    <div id="view-adder" class="view-section">
+                        <div class="info-card">
+                            <p>Génération d'un Additionneur de <strong id="adder-size-label">4 bits</strong>.</p>
+                        </div>
+                        <div class="input-group mt-3">
+                            <label>Taille du registre (n)</label>
+                            <select id="adder-n" class="code-input" onchange="app.updateAdderLabel()">
+                                <option value="0">1 bit (n=0)</option>
+                                <option value="1">2 bits (n=1)</option>
+                                <option value="2" selected>4 bits (n=2)</option>
+                                <option value="3">8 bits (n=3)</option>
+                            </select>
+                            <small>Taille du circuit : s = 2^n</small>
+                        </div>
+                        <div class="input-group mt-2">
+                            <label>Nombre A (décimal)</label>
+                            <input type="number" id="adder-A" value="13" min="0" class="code-input">
+                        </div>
+                        <div class="input-group mt-2">
+                            <label>Nombre B (décimal)</label>
+                            <input type="number" id="adder-B" value="7" min="0" class="code-input">
+                        </div>
+                        <div class="input-group mt-2">
+                            <label>Retenue initiale (Carry In)</label>
+                            <select id="adder-C" class="code-input">
+                                <option value="0" selected>0</option>
+                                <option value="1">1</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary mt-2" onclick="app.runAdder()">Calculer l'Addition</button>
+                        
+                        <div class="results-container mt-4" id="adder-results" style="display: none;">
+                            <h3>Résultats de l'Opération</h3>
+                            <div class="stats-grid">
+                                <div class="stat-box">
+                                    <span class="stat-label">Binaire</span>
+                                    <strong class="stat-value text-accent" id="res-bin"></strong>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-label">Décimal</span>
+                                    <strong class="stat-value text-success" id="res-dec"></strong>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-label">Retenue Sortante</span>
+                                    <strong class="stat-value" id="res-carry"></strong>
+                                </div>
+                            </div>
+                            <div class="metrics-row mt-3">
+                                <span>Noeuds: <b id="stat-nodes"></b></span>
+                                <span>I/O: <b id="stat-io"></b></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RANDOM VIEW -->
+                    <div id="view-random" class="view-section">
+                        <div class="info-card">
+                            <p>Génération de graphes aléatoires respectant les propriétés DAG pour tester les algorithmes.</p>
+                        </div>
+                        <button class="btn btn-primary mt-3" onclick="app.runRandom()">Générer un Graphe Aléatoire</button>
+                        
+                        <div class="results-container mt-4" id="random-results" style="display: none;">
+                            <h3>Analyses Algorithmiques</h3>
+                            <div class="stat-box mt-2">
+                                <span class="stat-label">Profondeur du Graphe (Tri Topologique)</span>
+                                <strong class="stat-value text-accent" id="res-depth"></strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- CODE SOURCE VIEW -->
+                    <div id="view-code" class="view-section">
+                        <div class="info-card">
+                            <p>Fichiers du projet</p>
+                        </div>
+                        <div class="file-list mt-3" id="file-list-container" style="max-height: 50vh; overflow-y: auto;">
+                            <!-- Populated dynamically -->
+                            <div class="placeholder-text" style="position: relative; margin-top: 2rem;">Chargement...</div>
+                        </div>
+                    </div>
+
+                    <!-- Loader Overlay -->
+                    <div id="loader" class="loader-overlay">
+                        <div class="spinner"></div>
+                        <span>Calcul en cours...</span>
+                    </div>
+
+                </div>
+
+                <!-- Right Panel : Graph Visualization / Code -->
+                <div class="graph-panel glass-panel" id="graph-container">
+                    <div class="placeholder-text" id="graph-placeholder">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5; margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                        <p>Le graphe s'affichera ici</p>
+                    </div>
+                    <div id="graph-target"></div>
+                    <pre id="code-target" style="display: none; width: 100%; height: 100%; overflow: auto; margin: 0; text-align: left; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.5; color: #e2e8f0;"><code></code></pre>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

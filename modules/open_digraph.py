@@ -10,7 +10,6 @@ from modules.composition import OpenDigraphComposition
 from modules.algo_tout_genre import OpenDigraphAlgoToutGenre
 
 class open_digraph(OpenDigraphMatrix, OpenDigraphComposition, OpenDigraphAlgoToutGenre):
-    # TD 1
     def __init__(self, inputs, outputs, nodes):
         self.inputs = inputs
         self.outputs = outputs
@@ -106,8 +105,6 @@ class open_digraph(OpenDigraphMatrix, OpenDigraphComposition, OpenDigraphAlgoTou
         for src, tgt in edges:
             self.add_edge(src, tgt)
 
-
-    #TD2
 
     def remove_edge(self, src, tgt):
         if src not in self.nodes:
@@ -238,7 +235,6 @@ class open_digraph(OpenDigraphMatrix, OpenDigraphComposition, OpenDigraphAlgoTou
     def get_node_id_to_index_map(self):
         return {node_id: index for index, node_id in enumerate(self.nodes.keys())}
 
-    #TD 4
     def save_as_dot_file(self, path, verbose=False):
         with open(path, 'w') as f:
             f.write("digraph G {\n")
@@ -311,7 +307,6 @@ class open_digraph(OpenDigraphMatrix, OpenDigraphComposition, OpenDigraphAlgoTou
         webbrowser.open(url)
 
 
-    # TD 5
 
     def min_id(self):
         if not self.nodes:

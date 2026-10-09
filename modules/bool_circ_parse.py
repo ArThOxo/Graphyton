@@ -33,6 +33,16 @@ class BoolCircParse:
             else:
                 s2 += char
                 
+        # Assurer que les noeuds de sortie sont des noeuds vides (fils) sans label
+        out_ids = circuit.get_output_ids().copy()
+        for out_id in out_ids:
+            out_node = circuit.get_node_by_id(out_id)
+            if out_node.get_label() != "":
+                new_out_id = circuit.add_node(label="")
+                circuit.add_edge(out_id, new_out_id)
+                circuit.outputs.remove(out_id)
+                circuit.add_output_id(new_out_id)
+                
         return circuit
 
     @classmethod

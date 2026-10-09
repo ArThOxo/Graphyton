@@ -1,0 +1,12 @@
+{
+  "name": "Graphython Interactive Demo",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": {
+      "label": "Graphython Web Demo",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "postStartCommand": "python demo_web.py"
+}
